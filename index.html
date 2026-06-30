@@ -14,18 +14,22 @@
 <title>Gym Log</title>
 <style>
   :root {
-    --bg: #0c0e1c;
-    --bg2: #12152b;
-    --card: #171b34;
-    --card2: #1f2444;
-    --line: #2a3056;
-    --text: #eef0ff;
-    --muted: #9aa0c8;
+    --bg: #0a0c18;
+    --bg2: #11142a;
+    --card: #161a31;
+    --card2: #1e2342;
+    --line: #2b3158;
+    --line2: #353c6b;
+    --text: #f1f2ff;
+    --muted: #9298c4;
     --accent: #7c5cff;
-    --accent2: #9d86ff;
-    --green: #22c55e;
-    --yellow: #eab308;
-    --red: #ef4444;
+    --accent2: #a892ff;
+    --accent-grad: linear-gradient(135deg, #8d70ff 0%, #6b46ff 100%);
+    --green: #2ecc71;
+    --yellow: #f0b429;
+    --red: #f0506e;
+    --shadow: 0 1px 2px rgba(0,0,0,0.35);
+    --shadow-lg: 0 12px 34px rgba(0,0,0,0.45);
     --safe-top: env(safe-area-inset-top, 0px);
     --safe-bottom: env(safe-area-inset-bottom, 0px);
   }
@@ -37,7 +41,16 @@
     -webkit-font-smoothing: antialiased;
     overscroll-behavior-y: none;
   }
-  body { display: flex; flex-direction: column; }
+  body {
+    display: flex; flex-direction: column;
+    background:
+      radial-gradient(120% 60% at 50% -10%, rgba(124,92,255,0.20), transparent 60%),
+      radial-gradient(90% 40% at 100% 0%, rgba(46,204,113,0.06), transparent 55%),
+      var(--bg);
+    background-attachment: fixed;
+  }
+  @keyframes viewIn { from { opacity: 0; transform: translateY(6px); } to { opacity: 1; transform: none; } }
+  #view.anim { animation: viewIn 0.22s ease both; }
   button { font-family: inherit; color: inherit; cursor: pointer; border: none; background: none; }
   input, select { font-family: inherit; }
   .hidden { display: none !important; }
@@ -51,11 +64,12 @@
     border-bottom: 1px solid var(--line);
     display: flex; align-items: center; gap: 10px;
   }
-  header .title { font-size: 19px; font-weight: 700; letter-spacing: -0.2px; flex: 1; min-width: 0;
+  header .title { font-size: 20px; font-weight: 800; letter-spacing: -0.3px; flex: 1; min-width: 0;
     overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
-  header .back { font-size: 22px; padding: 4px 8px 4px 0; color: var(--accent2); }
+  header .back { font-size: 26px; padding: 2px 6px 2px 0; color: var(--accent2); line-height: 1; }
   .iconbtn { width: 40px; height: 40px; display: grid; place-items: center; border-radius: 12px;
-    background: var(--card); font-size: 18px; }
+    background: var(--card); border: 1px solid var(--line); font-size: 18px; transition: transform 0.15s; }
+  .iconbtn:active { transform: scale(0.92); }
 
   /* Main scroll area */
   main { flex: 1; overflow-y: auto; -webkit-overflow-scrolling: touch;
@@ -69,13 +83,19 @@
     background: rgba(12,14,28,0.92); backdrop-filter: blur(14px);
     border-top: 1px solid var(--line);
   }
-  nav.tabs button { display: flex; flex-direction: column; align-items: center; gap: 3px;
-    padding: 6px 0; color: var(--muted); font-size: 11px; font-weight: 600; border-radius: 12px; }
-  nav.tabs button .ic { font-size: 21px; line-height: 1; }
+  nav.tabs button { display: flex; flex-direction: column; align-items: center; gap: 4px;
+    padding: 7px 0 5px; color: var(--muted); font-size: 11px; font-weight: 600; border-radius: 14px;
+    transition: color 0.15s; }
+  nav.tabs button .ic { width: 30px; height: 30px; display: grid; place-items: center; border-radius: 10px;
+    transition: background 0.2s, transform 0.15s; }
+  nav.tabs button .ic svg { width: 23px; height: 23px; }
   nav.tabs button.active { color: var(--accent2); }
+  nav.tabs button.active .ic { background: rgba(124,92,255,0.16); }
+  nav.tabs button:active .ic { transform: scale(0.9); }
 
   /* Cards & generic */
-  .card { background: var(--card); border: 1px solid var(--line); border-radius: 16px; padding: 14px; margin-bottom: 12px; }
+  .card { background: var(--card); border: 1px solid var(--line); border-radius: 18px; padding: 15px; margin-bottom: 12px;
+    box-shadow: var(--shadow), inset 0 1px 0 rgba(255,255,255,0.03); }
   .muted { color: var(--muted); }
   .row { display: flex; align-items: center; gap: 10px; }
   .between { justify-content: space-between; }
@@ -83,51 +103,61 @@
     background: var(--card2); color: var(--accent2); }
   h2.sec { font-size: 13px; text-transform: uppercase; letter-spacing: 0.8px; color: var(--muted);
     margin: 4px 4px 8px; font-weight: 700; }
-  .big-accent-btn { width: 100%; padding: 18px; border-radius: 16px; font-size: 18px; font-weight: 800;
-    background: var(--accent); color: #fff; letter-spacing: 0.2px;
-    box-shadow: 0 8px 24px rgba(124,92,255,0.35); }
-  .big-accent-btn:active { transform: scale(0.98); }
-  .ghost-btn { width: 100%; padding: 14px; border-radius: 14px; font-weight: 700; font-size: 15px;
-    background: var(--card2); color: var(--text); border: 1px solid var(--line); }
+  .big-accent-btn { width: 100%; padding: 19px; border-radius: 18px; font-size: 18px; font-weight: 800;
+    background: var(--accent-grad); color: #fff; letter-spacing: 0.2px;
+    box-shadow: 0 10px 28px rgba(124,92,255,0.4), inset 0 1px 0 rgba(255,255,255,0.25);
+    transition: transform 0.12s, box-shadow 0.12s; }
+  .big-accent-btn:active { transform: scale(0.975); box-shadow: 0 4px 14px rgba(124,92,255,0.35); }
+  .ghost-btn { width: 100%; padding: 15px; border-radius: 16px; font-weight: 700; font-size: 15px;
+    background: var(--card2); color: var(--text); border: 1px solid var(--line); transition: transform 0.12s; }
+  .ghost-btn:active { transform: scale(0.985); }
 
   /* Picker */
-  .search { width: 100%; padding: 14px 14px; border-radius: 14px; background: var(--card);
-    border: 1px solid var(--line); color: var(--text); font-size: 16px; margin-bottom: 12px; }
+  .search { width: 100%; padding: 15px 16px; border-radius: 15px; background: var(--card);
+    border: 1px solid var(--line); color: var(--text); font-size: 16px; margin-bottom: 12px; box-shadow: var(--shadow); }
+  .search:focus { outline: none; border-color: var(--accent); }
   .ex-item { display: flex; align-items: center; justify-content: space-between; gap: 10px;
-    padding: 15px 14px; background: var(--card); border: 1px solid var(--line);
-    border-radius: 14px; margin-bottom: 8px; width: 100%; text-align: left; }
-  .ex-item:active { background: var(--card2); }
-  .ex-item .nm { font-size: 16px; font-weight: 600; }
-  .ex-item .mu { font-size: 12px; color: var(--muted); margin-top: 2px; }
-  .ex-item .chev { color: var(--muted); font-size: 18px; }
+    padding: 15px 15px; background: var(--card); border: 1px solid var(--line);
+    border-radius: 15px; margin-bottom: 8px; width: 100%; text-align: left;
+    box-shadow: var(--shadow); transition: transform 0.12s, background 0.15s, border-color 0.15s; }
+  .ex-item:active { background: var(--card2); border-color: var(--line2); transform: scale(0.99); }
+  .ex-item .nm { font-size: 16px; font-weight: 650; }
+  .ex-item .mu { font-size: 12px; color: var(--muted); margin-top: 3px; }
+  .ex-item .chev { color: var(--accent2); font-size: 20px; opacity: 0.7; }
 
   /* Last time card */
-  .lasttime { background: linear-gradient(135deg, #1a1f44, #14172e); border: 1px solid #2e356a; }
-  .lasttime .lbl { font-size: 12px; font-weight: 700; letter-spacing: 0.5px; color: var(--accent2);
+  .lasttime { position: relative; overflow: hidden; padding: 17px;
+    background: linear-gradient(140deg, #20254f 0%, #161a36 55%, #13162d 100%);
+    border: 1px solid #343b75; box-shadow: 0 10px 30px rgba(80,60,180,0.18), inset 0 1px 0 rgba(255,255,255,0.05); }
+  .lasttime::after { content: ""; position: absolute; top: -40%; right: -20%; width: 60%; height: 160%;
+    background: radial-gradient(closest-side, rgba(124,92,255,0.22), transparent); pointer-events: none; }
+  .lasttime .lbl { font-size: 12px; font-weight: 800; letter-spacing: 0.8px; color: var(--accent2);
     text-transform: uppercase; }
-  .lasttime .sets { font-size: 24px; font-weight: 800; letter-spacing: -0.3px; margin-top: 6px; line-height: 1.25; }
-  .lasttime .date { font-size: 13px; color: var(--muted); margin-top: 6px; }
+  .lasttime .sets { font-size: 27px; font-weight: 800; letter-spacing: -0.5px; margin-top: 8px; line-height: 1.22; }
+  .lasttime .date { font-size: 13px; color: var(--muted); margin-top: 8px; }
 
   /* Today set rows */
-  .set-row { display: flex; align-items: center; gap: 10px; padding: 12px 12px;
-    border-radius: 12px; background: var(--card2); margin-bottom: 8px; border: 1px solid transparent; }
-  .set-row.editing { border-color: var(--accent); }
-  .set-row .idx { width: 26px; height: 26px; border-radius: 8px; background: var(--card);
-    display: grid; place-items: center; font-size: 12px; font-weight: 700; color: var(--muted); }
+  .set-row { display: flex; align-items: center; gap: 11px; padding: 12px 12px;
+    border-radius: 14px; background: var(--card2); margin-bottom: 8px; border: 1px solid var(--line);
+    transition: border-color 0.15s; }
+  .set-row.editing { border-color: var(--accent); box-shadow: 0 0 0 3px rgba(124,92,255,0.15); }
+  .set-row .idx { width: 28px; height: 28px; border-radius: 9px; background: var(--accent-grad);
+    display: grid; place-items: center; font-size: 12px; font-weight: 800; color: #fff; flex: none; }
   .set-row .wr { flex: 1; font-size: 17px; font-weight: 700; }
-  .set-row .e1 { font-size: 12px; color: var(--muted); }
-  .set-row .del { width: 34px; height: 34px; border-radius: 10px; background: var(--card);
-    display: grid; place-items: center; font-size: 16px; color: var(--red); }
+  .set-row .e1 { font-size: 12px; color: var(--muted); font-weight: 500; }
+  .set-row .del { width: 36px; height: 36px; border-radius: 11px; background: var(--card); flex: none;
+    display: grid; place-items: center; font-size: 16px; color: var(--red); border: 1px solid var(--line); }
+  .set-row .del:active { background: rgba(240,80,110,0.15); }
 
   /* Stepper input */
-  .stepper { display: flex; align-items: stretch; background: var(--card2); border-radius: 14px;
-    border: 1px solid var(--line); overflow: hidden; }
-  .stepper button { width: 56px; font-size: 26px; font-weight: 700; color: var(--accent2);
-    display: grid; place-items: center; }
-  .stepper button:active { background: var(--card); }
-  .stepper .field { flex: 1; display: flex; flex-direction: column; align-items: center; justify-content: center; padding: 8px 0; }
-  .stepper .field input { width: 100%; text-align: center; background: none; border: none; outline: none;
-    color: var(--text); font-size: 30px; font-weight: 800; padding: 0; }
+  .stepper { display: flex; align-items: stretch; background: var(--card2); border-radius: 16px;
+    border: 1px solid var(--line); overflow: hidden; box-shadow: var(--shadow); }
+  .stepper button { width: 50px; flex: none; font-size: 27px; font-weight: 700; color: var(--accent2);
+    display: grid; place-items: center; transition: background 0.12s; }
+  .stepper button:active { background: var(--accent); color: #fff; }
+  .stepper .field { flex: 1; min-width: 0; display: flex; flex-direction: column; align-items: center; justify-content: center; padding: 10px 2px; }
+  .stepper .field input { width: 100%; min-width: 0; text-align: center; background: none; border: none; outline: none;
+    color: var(--text); font-size: 28px; font-weight: 800; padding: 0; }
   .stepper .field .cap { font-size: 11px; color: var(--muted); font-weight: 600; text-transform: uppercase; letter-spacing: 0.5px; }
   .inp-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-bottom: 10px; }
   .rir-row { display: flex; align-items: center; gap: 8px; margin-bottom: 10px; }
@@ -177,10 +207,6 @@
   .seg button.active { background: var(--accent); color: #fff; }
   .text-input { width: 100%; padding: 13px; border-radius: 12px; background: var(--card);
     border: 1px solid var(--line); color: var(--text); font-size: 16px; }
-  .banner { display: flex; align-items: center; gap: 10px; padding: 12px 14px; border-radius: 14px;
-    background: rgba(124,92,255,0.14); border: 1px solid #3a3a7a; margin-bottom: 12px; }
-  .banner .txt { flex: 1; font-size: 13px; }
-  .banner button { font-weight: 700; color: var(--accent2); padding: 6px 8px; }
   .empty { text-align: center; color: var(--muted); padding: 40px 20px; font-size: 15px; }
   .empty .big { font-size: 40px; margin-bottom: 10px; }
   .list-mini { display: flex; justify-content: space-between; align-items: center; padding: 12px 14px;
@@ -201,9 +227,9 @@
   </header>
   <main id="view"></main>
   <nav class="tabs">
-    <button data-act="tab" data-tab="log"><span class="ic">▦</span>Log</button>
-    <button data-act="tab" data-tab="volume"><span class="ic">▤</span>Volume</button>
-    <button data-act="tab" data-tab="progress"><span class="ic">◔</span>Progress</button>
+    <button data-act="tab" data-tab="log"><span class="ic"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M6.5 5v14M17.5 5v14M3.5 8.5v7M20.5 8.5v7M6.5 12h11"/></svg></span>Log</button>
+    <button data-act="tab" data-tab="volume"><span class="ic"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M5 20V11M12 20V5M19 20v-6"/></svg></span>Volume</button>
+    <button data-act="tab" data-tab="progress"><span class="ic"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 16.5 9 10l4 4 8-8.5"/><path d="M15 5.5h6v6"/></svg></span>Progress</button>
   </nav>
   <div class="toast" id="toast"></div>
   <input type="file" id="fileInput" accept="application/json,.json" class="hidden" />
@@ -214,7 +240,6 @@
 const STORAGE_KEY = "gymlog.v1";
 const LB_PER_KG = 2.2046226218;
 const MUSCLES = ["Chest","Back","Shoulders","Traps","Biceps","Triceps","Quads","Hamstrings","Glutes","Calves","Abs","Forearms"];
-const BACKUP_INTERVAL_DAYS = 7;
 
 /* Seed library: [name, primaryMuscle, secondaryMuscle|null] */
 const SEED = [
@@ -310,7 +335,6 @@ const state = {
   search: "",
   weekOffset: 0,
   chartExId: null,
-  backupDismissed: false,
 };
 
 /* ============================ Render ============================ */
@@ -333,21 +357,8 @@ function render(){
     else { hdrTitle.textContent = "Log"; renderPicker(); }
   } else if(state.tab === "volume"){ hdrTitle.textContent = "Weekly Volume"; renderVolume(); }
   else if(state.tab === "progress"){ hdrTitle.textContent = "Progress"; renderProgress(); }
-}
-
-/* ---------- Backup banner ---------- */
-function backupBannerHTML(){
-  if(state.backupDismissed || db.logs.length === 0) return "";
-  const last = db.settings.lastBackup;
-  const due = !last || (Date.now() - last) > BACKUP_INTERVAL_DAYS*86400000;
-  if(!due) return "";
-  const msg = last ? "It's been a while — back up your data." : "Protect your logs — save a backup.";
-  return `<div class="banner">
-    <span>💾</span>
-    <div class="txt">${msg} iOS can clear app storage.</div>
-    <button data-act="export">Export</button>
-    <button data-act="dismiss-backup" aria-label="Dismiss">✕</button>
-  </div>`;
+  // subtle fade/slide on navigation only (not on the hot stepper re-renders)
+  view.classList.remove("anim"); void view.offsetWidth; view.classList.add("anim");
 }
 
 /* ---------- Picker ---------- */
@@ -363,8 +374,7 @@ function renderPicker(){
     .sort((a,b)=> lastByEx[b] < lastByEx[a] ? -1 : 1)
     .map(exById).filter(Boolean).slice(0,6);
 
-  let html = backupBannerHTML();
-  html += `<input class="search" id="searchInput" placeholder="Search exercises…" value="${escAttr(state.search)}" />`;
+  let html = `<input class="search" id="searchInput" placeholder="Search exercises…" value="${escAttr(state.search)}" />`;
 
   if(!q && recent.length){
     html += `<h2 class="sec">Recent</h2>`;
@@ -598,7 +608,7 @@ function renderVolume(){
       const color = c < 10 ? "var(--yellow)" : (c <= 20 ? "var(--green)" : "var(--red)");
       const pct = Math.min(100, (c/MAXBAR)*100);
       html += `<div class="vol-row">
-        <div class="vol-head"><span class="nm">${m}</span><span class="ct" style="color:${color}">${fmtNum(c)} sets</span></div>
+        <div class="vol-head"><span class="nm">${m}</span><span class="ct" style="color:${color}">${fmtNum(c)} set${c===1?"":"s"}</span></div>
         <div class="vol-bar">
           <div class="fill" style="width:${pct}%;background:${color}"></div>
           <div class="band" style="left:${(10/MAXBAR)*100}%"></div>
@@ -706,10 +716,11 @@ function drawChart(){
     ctx.beginPath(); ctx.moveTo(pad.l, yy); ctx.lineTo(cssW-pad.r, yy); ctx.stroke();
     ctx.fillText(Math.round(v), pad.l-6, yy);
   }
-  // x labels (first & last)
-  ctx.textAlign = "center"; ctx.textBaseline = "top";
-  ctx.fillText(shortDate(sess[0].date), x(0), cssH-pad.b+6);
-  if(sess.length>1) ctx.fillText(shortDate(sess[sess.length-1].date), x(sess.length-1), cssH-pad.b+6);
+  // x labels (first & last) — anchored inward so they never clip the canvas edge
+  ctx.textBaseline = "top";
+  ctx.textAlign = sess.length>1 ? "left" : "center";
+  ctx.fillText(shortDate(sess[0].date), sess.length>1 ? pad.l : x(0), cssH-pad.b+6);
+  if(sess.length>1){ ctx.textAlign = "right"; ctx.fillText(shortDate(sess[sess.length-1].date), cssW-pad.r, cssH-pad.b+6); }
 
   // area fill
   const grad = ctx.createLinearGradient(0,pad.t,0,pad.t+H);
@@ -936,7 +947,6 @@ document.addEventListener("click", (e) => {
 
     case "export": exportBackup(); break;
     case "restore": fileInput.click(); break;
-    case "dismiss-backup": state.backupDismissed = true; render(); break;
 
     case "unit":
       db.settings.unit = el.dataset.u; save();
