@@ -31,8 +31,8 @@ Your data stays on your device.
 - **Progress** tab — **PR board** (best e1RM, best weight, last performed) and an
   **e1RM-over-time** line chart per exercise.
 - Auto-computed **estimated 1RM** per set (Epley: `weight × (1 + reps/30)`).
-- **~75 preloaded** common hypertrophy lifts with primary/secondary muscle mappings.
-  Add and edit your own from **Settings**.
+- Starts with a single exercise (**Lat Pulldown**); add and edit your own from
+  **Settings → Add custom exercise**, with primary/secondary muscle mappings.
 - **lb** by default, with a **kg** toggle in Settings.
 - Dark, phone-first UI with large tap targets; designed for one-handed use.
 

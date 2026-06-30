@@ -35,9 +35,9 @@ await page.goto(base, { waitUntil:'networkidle' });
 assert(await page.locator('nav.tabs button').count()===3, 'three tabs render');
 
 // ---- Pick an exercise (first session) ----
-await page.locator('.search').fill('Barbell Bench');
+await page.locator('.search').fill('Lat');
 await page.waitForTimeout(250);
-await page.locator('.ex-item', { hasText:'Barbell Bench Press' }).first().click();
+await page.locator('.ex-item', { hasText:'Lat Pulldown' }).first().click();
 await page.waitForTimeout(100);
 assert(await page.locator('.lasttime .lbl').textContent().then(t=>t.includes('First time')), 'first time shows baseline card');
 
@@ -65,7 +65,7 @@ await page.evaluate(()=>{
 await page.reload({ waitUntil:'networkidle' });
 
 // ---- Acceptance test: pick same exercise, see last time within one tap, log with zero typing ----
-await page.locator('.ex-item', { hasText:'Barbell Bench Press' }).first().click();
+await page.locator('.ex-item', { hasText:'Lat Pulldown' }).first().click();
 await page.waitForTimeout(120);
 const last = await page.locator('.lasttime .sets').textContent();
 assert(last.includes('155×8'), `last time shows prior session (${last.trim()})`);
@@ -96,7 +96,7 @@ await page.locator('[data-act=done-edit]').click();
 await page.locator('[data-tab=volume]').click();
 await page.waitForTimeout(80);
 const volTxt = await page.locator('#view').textContent();
-assert(/Chest/.test(volTxt) && /sets/.test(volTxt), 'volume tab shows Chest sets');
+assert(/Back/.test(volTxt) && /sets/.test(volTxt), 'volume tab shows Back sets');
 
 // ---- Progress tab + chart ----
 await page.locator('[data-tab=progress]').click();
