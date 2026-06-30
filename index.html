@@ -78,7 +78,7 @@
   /* Tab bar */
   nav.tabs {
     position: fixed; left: 0; right: 0; bottom: 0; z-index: 20;
-    display: grid; grid-template-columns: repeat(3, 1fr);
+    display: grid; grid-template-columns: repeat(2, 1fr);
     padding: 8px 10px calc(8px + var(--safe-bottom));
     background: rgba(12,14,28,0.92); backdrop-filter: blur(14px);
     border-top: 1px solid var(--line);
@@ -122,7 +122,8 @@
     box-shadow: var(--shadow); transition: transform 0.12s, background 0.15s, border-color 0.15s; }
   .ex-item:active { background: var(--card2); border-color: var(--line2); transform: scale(0.99); }
   .ex-item .nm { font-size: 16px; font-weight: 650; }
-  .ex-item .mu { font-size: 12px; color: var(--muted); margin-top: 3px; }
+  .ex-item .mu { font-size: 12px; color: var(--muted); margin-top: 3px;
+    white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
   .ex-item .chev { color: var(--accent2); font-size: 20px; opacity: 0.7; }
 
   /* Last time card */
@@ -164,24 +165,8 @@
   .rir-row .lab { font-size: 13px; color: var(--muted); font-weight: 600; }
   .rir-input { width: 70px; text-align: center; padding: 10px; border-radius: 12px; background: var(--card2);
     border: 1px solid var(--line); color: var(--text); font-size: 17px; font-weight: 700; }
-  .preview { text-align: center; font-size: 13px; color: var(--muted); margin: 2px 0 12px; }
   .edit-actions { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
   .edit-actions .del-btn { background: rgba(239,68,68,0.15); color: #ff8a8a; }
-
-  /* Volume */
-  .vol-row { margin-bottom: 14px; }
-  .vol-head { display: flex; justify-content: space-between; align-items: baseline; margin-bottom: 6px; }
-  .vol-head .nm { font-weight: 700; font-size: 15px; }
-  .vol-head .ct { font-weight: 800; font-size: 15px; }
-  .vol-bar { height: 12px; background: var(--card2); border-radius: 999px; overflow: hidden; position: relative; }
-  .vol-bar .fill { height: 100%; border-radius: 999px; }
-  .vol-bar .band { position: absolute; top: 0; bottom: 0; border-left: 2px dashed rgba(255,255,255,0.25); }
-  .legend { display: flex; gap: 14px; font-size: 12px; color: var(--muted); margin: 4px 4px 14px; flex-wrap: wrap; }
-  .legend .dot { display: inline-block; width: 10px; height: 10px; border-radius: 3px; margin-right: 5px; vertical-align: -1px; }
-  .weeknav { display: flex; align-items: center; justify-content: space-between; margin-bottom: 12px; }
-  .weeknav button { padding: 8px 14px; border-radius: 12px; background: var(--card); border: 1px solid var(--line); font-size: 18px; }
-  .weeknav .wk { font-weight: 700; font-size: 15px; text-align: center; }
-  .weeknav .wk small { display: block; color: var(--muted); font-weight: 500; font-size: 12px; }
 
   /* Progress */
   .pr-item { display: flex; justify-content: space-between; align-items: center; padding: 13px 14px;
@@ -212,6 +197,36 @@
   .list-mini { display: flex; justify-content: space-between; align-items: center; padding: 12px 14px;
     background: var(--card); border: 1px solid var(--line); border-radius: 13px; margin-bottom: 8px; }
   .small-btn { padding: 7px 12px; border-radius: 10px; font-weight: 700; font-size: 13px; background: var(--card2); border: 1px solid var(--line); }
+  /* Rest timer bar */
+  .rest-timer { position: fixed; left: 12px; right: 12px; bottom: calc(78px + var(--safe-bottom)); z-index: 30;
+    display: flex; align-items: stretch; gap: 8px; padding: 8px;
+    background: linear-gradient(135deg, #20254f, #171b36); border: 1px solid var(--accent);
+    border-radius: 18px; box-shadow: var(--shadow-lg);
+    animation: viewIn 0.2s ease both; }
+  .rest-timer.done { border-color: var(--green); }
+  .rest-timer .rt-adj { width: 56px; flex: none; border-radius: 12px; background: rgba(255,255,255,0.06);
+    font-size: 15px; font-weight: 800; color: var(--accent2); }
+  .rest-timer .rt-adj:active { background: rgba(255,255,255,0.14); }
+  .rest-timer .rt-main { flex: 1; min-width: 0; display: flex; flex-direction: column; justify-content: center;
+    gap: 5px; padding: 4px 6px; }
+  .rest-timer .rt-time { font-size: 22px; font-weight: 800; letter-spacing: 0.3px; line-height: 1; }
+  .rest-timer .rt-prog { height: 5px; border-radius: 999px; background: rgba(255,255,255,0.12); overflow: hidden; }
+  .rest-timer .rt-fill { height: 100%; width: 100%; background: var(--accent2); border-radius: 999px; transition: width 0.9s linear; }
+  .rest-timer.done .rt-fill { background: var(--green); }
+  .rest-timer .rt-x { width: 44px; flex: none; border-radius: 12px; background: rgba(255,255,255,0.06);
+    font-size: 16px; color: var(--muted); }
+
+  /* Beat-last-time feedback */
+  .beat { display: flex; align-items: center; gap: 8px; padding: 11px 14px; border-radius: 14px;
+    margin-bottom: 12px; font-size: 14px; font-weight: 600; background: var(--card2); border: 1px solid var(--line); }
+  .beat.win { background: rgba(46,204,113,0.14); border-color: rgba(46,204,113,0.5); color: #74e3a3; }
+  .beat .ico { font-size: 16px; }
+  .beat .ref { color: var(--muted); font-weight: 500; }
+  .set-row .win-badge { color: var(--green); font-weight: 800; font-size: 13px; }
+  .seg-toggle { display: flex; background: var(--card2); border-radius: 12px; padding: 4px; border: 1px solid var(--line); margin-bottom: 12px; }
+  .seg-toggle button { flex: 1; padding: 10px; border-radius: 9px; font-weight: 700; color: var(--muted); font-size: 14px; }
+  .seg-toggle button.active { background: var(--accent); color: #fff; }
+
   .toast { position: fixed; left: 50%; transform: translateX(-50%); bottom: calc(96px + var(--safe-bottom));
     background: var(--card2); border: 1px solid var(--line); color: var(--text); padding: 12px 18px;
     border-radius: 12px; font-size: 14px; font-weight: 600; z-index: 60; box-shadow: 0 10px 30px rgba(0,0,0,0.4);
@@ -226,9 +241,17 @@
     <button class="iconbtn" data-act="open-settings" aria-label="Settings">⚙︎</button>
   </header>
   <main id="view"></main>
+  <div class="rest-timer hidden" id="restTimer">
+    <button class="rt-adj" data-act="rest-minus" aria-label="Less rest">−15</button>
+    <div class="rt-main" data-act="rest-skip">
+      <div class="rt-time" id="rtTime">2:00</div>
+      <div class="rt-prog"><div class="rt-fill" id="rtFill"></div></div>
+    </div>
+    <button class="rt-adj" data-act="rest-plus" aria-label="More rest">+15</button>
+    <button class="rt-x" data-act="rest-skip" aria-label="Skip rest">✕</button>
+  </div>
   <nav class="tabs">
     <button data-act="tab" data-tab="log"><span class="ic"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M6.5 5v14M17.5 5v14M3.5 8.5v7M20.5 8.5v7M6.5 12h11"/></svg></span>Log</button>
-    <button data-act="tab" data-tab="volume"><span class="ic"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M5 20V11M12 20V5M19 20v-6"/></svg></span>Volume</button>
     <button data-act="tab" data-tab="progress"><span class="ic"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 16.5 9 10l4 4 8-8.5"/><path d="M15 5.5h6v6"/></svg></span>Progress</button>
   </nav>
   <div class="toast" id="toast"></div>
@@ -239,12 +262,10 @@
 /* ============================ Constants ============================ */
 const STORAGE_KEY = "gymlog.v1";
 const LB_PER_KG = 2.2046226218;
-const MUSCLES = ["Chest","Back","Shoulders","Traps","Biceps","Triceps","Quads","Hamstrings","Glutes","Calves","Abs","Forearms"];
+const DEFAULT_REST = 120; // seconds
 
-/* Seed library: [name, primaryMuscle, secondaryMuscle|null] */
-const SEED = [
-  ["Lat Pulldown","Back","Biceps"],
-];
+/* Seed library: [name] */
+const SEED = ["Lat Pulldown"];
 
 /* ============================ Persistence ============================ */
 function slug(s){ return s.toLowerCase().replace(/[^a-z0-9]+/g,"-").replace(/^-|-$/g,""); }
@@ -252,9 +273,9 @@ function uid(){ return Date.now().toString(36) + Math.random().toString(36).slic
 
 function defaultDB(){
   return {
-    version: 1,
-    settings: { unit: "lb", lastBackup: null },
-    exercises: SEED.map(([name,p,s]) => ({ id: slug(name), name, primary: p, secondary: s, custom: false })),
+    version: 2,
+    settings: { unit: "lb", lastBackup: null, restSeconds: DEFAULT_REST, restEnabled: true },
+    exercises: SEED.map((name) => ({ id: slug(name), name, custom: false })),
     logs: [],
   };
 }
@@ -264,7 +285,7 @@ function loadDB(){
     if(!raw) return defaultDB();
     const d = JSON.parse(raw);
     if(!d || !Array.isArray(d.exercises) || !Array.isArray(d.logs)) return defaultDB();
-    d.settings = Object.assign({ unit:"lb", lastBackup:null }, d.settings||{});
+    d.settings = Object.assign({ unit:"lb", lastBackup:null, restSeconds:DEFAULT_REST, restEnabled:true }, d.settings||{});
     return d;
   } catch(e){ return defaultDB(); }
 }
@@ -287,8 +308,14 @@ function fmtNum(n){
   const r = Math.round(n*10)/10;
   return Number.isInteger(r) ? String(r) : String(r);
 }
-function e1rm(lb, reps){ return toDisp(lb) * (1 + reps/30); } // Epley, in display unit
-function e1rmLb(lb, reps){ return lb * (1 + reps/30); }       // canonical, for comparisons
+function setVol(lb, reps){ return toDisp(lb) * reps; }   // per-set volume in display unit
+function fmtInt(n){ return Math.round(n).toLocaleString(); }
+// Did set `a` beat set `b`? Heavier weight, or same weight for more reps.
+function beats(aLb, aReps, bLb, bReps){
+  if(aLb > bLb + 1e-6) return true;
+  if(Math.abs(aLb - bLb) < 1e-6 && aReps > bReps) return true;
+  return false;
+}
 
 /* ============================ Dates ============================ */
 function todayStr(){ return dateStr(new Date()); }
@@ -333,8 +360,8 @@ const state = {
   editingLogId: null,
   draft: { weight: null, reps: 8, rir: "" }, // display-unit values for the new set
   search: "",
-  weekOffset: 0,
   chartExId: null,
+  chartMetric: "weight", // "weight" | "volume"
 };
 
 /* ============================ Render ============================ */
@@ -355,8 +382,7 @@ function render(){
   if(state.tab === "log"){
     if(state.exId){ hdrTitle.textContent = exById(state.exId)?.name || "Exercise"; renderExercise(); }
     else { hdrTitle.textContent = "Log"; renderPicker(); }
-  } else if(state.tab === "volume"){ hdrTitle.textContent = "Weekly Volume"; renderVolume(); }
-  else if(state.tab === "progress"){ hdrTitle.textContent = "Progress"; renderProgress(); }
+  } else if(state.tab === "progress"){ hdrTitle.textContent = "Progress"; renderProgress(); }
   // subtle fade/slide on navigation only (not on the hot stepper re-renders)
   view.classList.remove("anim"); void view.offsetWidth; view.classList.add("anim");
 }
@@ -365,7 +391,7 @@ function render(){
 function renderPicker(){
   const q = state.search.trim().toLowerCase();
   const all = db.exercises.slice().sort((a,b)=> a.name.localeCompare(b.name));
-  const match = q ? all.filter(e => e.name.toLowerCase().includes(q) || e.primary.toLowerCase().includes(q)) : all;
+  const match = q ? all.filter(e => e.name.toLowerCase().includes(q)) : all;
 
   // recent by last performed
   const lastByEx = {};
@@ -406,9 +432,10 @@ function debouncedPicker(){
   }, 120);
 }
 function exItemHTML(e){
-  const mu = e.secondary ? `${e.primary} · ${e.secondary}` : e.primary;
+  const last = lastSession(e.id, null);
+  const sub = last ? `Last ${shortDate(last.date)} · ${setSummary(last.sets)}` : "Not yet logged";
   return `<button class="ex-item" data-act="pick" data-id="${e.id}">
-    <div><div class="nm">${escHtml(e.name)}</div><div class="mu">${escHtml(mu)}</div></div>
+    <div style="min-width:0"><div class="nm">${escHtml(e.name)}</div><div class="mu">${escHtml(sub)}</div></div>
     <div class="chev">›</div>
   </button>`;
 }
@@ -425,12 +452,17 @@ function renderExercise(){
 
   let html = "";
 
+  // reference set from last session, indexed to the set being logged
+  const refFor = (i) => last ? last.sets[Math.min(i, last.sets.length-1)] : null;
+
   // Last time card
   if(last){
+    const heavy = last.sets.reduce((a,b)=> b.weight > a.weight || (b.weight===a.weight && b.reps>a.reps) ? b : a);
+    const vol = last.sets.reduce((s,l)=> s + setVol(l.weight,l.reps), 0);
     html += `<div class="card lasttime">
       <div class="lbl">Last time · ${escHtml(shortDate(last.date))}</div>
       <div class="sets">${escHtml(setSummary(last.sets))}</div>
-      <div class="date">${last.sets.length} set${last.sets.length>1?"s":""} · best e1RM ${fmtNum(Math.max(...last.sets.map(s=>e1rm(s.weight,s.reps))))} ${unitLabel()}</div>
+      <div class="date">${last.sets.length} set${last.sets.length>1?"s":""} · top ${fmtNum(gridWeight(heavy.weight))}×${heavy.reps} · ${fmtInt(vol)} ${unitLabel()} volume</div>
     </div>`;
   } else {
     html += `<div class="card lasttime"><div class="lbl">First time</div>
@@ -442,10 +474,12 @@ function renderExercise(){
     html += `<h2 class="sec">Today · ${today.length} set${today.length>1?"s":""}</h2>`;
     today.forEach((l, i) => {
       const editing = l.id === state.editingLogId;
+      const ref = refFor(i);
+      const win = ref && beats(l.weight, l.reps, ref.weight, ref.reps);
       html += `<div class="set-row ${editing?"editing":""}" data-act="edit-log" data-id="${l.id}">
         <div class="idx">${i+1}</div>
         <div class="wr">${fmtNum(gridWeight(l.weight))} ${unitLabel()} × ${l.reps}${l.rir!==""&&l.rir!=null?` <span class="e1">@${l.rir} RIR</span>`:""}
-          <div class="e1">e1RM ${fmtNum(e1rm(l.weight,l.reps))} ${unitLabel()}</div></div>
+          ${win?`<span class="win-badge">↑ beat last</span>`:""}</div>
         <button class="del" data-act="del-log" data-id="${l.id}" aria-label="Delete">✕</button>
       </div>`;
     });
@@ -454,7 +488,7 @@ function renderExercise(){
   // Input area
   const editing = state.editingLogId ? db.logs.find(l => l.id === state.editingLogId) : null;
   let w, r, rir;
-  if(editing){ w = fmtNum(gridWeight(editing.weight)); r = editing.reps; rir = editing.rir ?? ""; }
+  if(editing){ w = fmtNum(gridWeight(editing.weight)); r = editing.reps; rir = editing.rir ?? ""; state.beatRef = null; }
   else {
     if(state.draft.weight == null){
       // prefill from today's last set, else last session's last set, else sensible default
@@ -463,9 +497,12 @@ function renderExercise(){
       state.draft.reps = src ? src.reps : 8;
     }
     w = fmtNum(state.draft.weight); r = state.draft.reps; rir = state.draft.rir;
+    const ref = refFor(today.length);
+    state.beatRef = ref ? { refLb: ref.weight, refReps: ref.reps, num: today.length+1 } : null;
   }
 
   html += `<h2 class="sec">${editing ? "Edit set" : "New set"}</h2>`;
+  if(!editing && state.beatRef) html += `<div class="beat" id="beatLine"></div>`;
   html += `<div class="inp-grid">
     <div class="stepper">
       <button data-act="w-dec">−</button>
@@ -480,8 +517,6 @@ function renderExercise(){
   </div>`;
   html += `<div class="rir-row"><span class="lab">RIR / RPE (optional)</span>
     <input class="rir-input" id="rirIn" inputmode="numeric" placeholder="–" value="${escAttr(String(rir))}" /></div>`;
-  const pw = parseFloat(w)||0, pr = parseInt(r)||0;
-  html += `<div class="preview">Est. 1RM ≈ <b>${fmtNum(pw*(1+pr/30))} ${unitLabel()}</b></div>`;
 
   if(editing){
     html += `<div class="edit-actions">
@@ -493,6 +528,7 @@ function renderExercise(){
   }
 
   view.innerHTML = html;
+  updateBeatLine();
   wireSetInputs();
 }
 
@@ -521,9 +557,21 @@ function readInputsToState(){
   } else {
     state.draft.weight = weight; state.draft.reps = reps; state.draft.rir = rir;
   }
-  // live update preview only
-  const prev = document.querySelector(".preview");
-  if(prev) prev.innerHTML = `Est. 1RM ≈ <b>${fmtNum(weight*(1+reps/30))} ${unitLabel()}</b>`;
+  updateBeatLine();
+}
+function updateBeatLine(){
+  const el = document.getElementById("beatLine");
+  if(!el || !state.beatRef) return;
+  const wIn = document.getElementById("wIn"), rIn = document.getElementById("rIn");
+  const wDisp = wIn ? (parseFloat(wIn.value)||0) : (state.draft.weight||0);
+  const reps = rIn ? (parseInt(rIn.value)||0) : (state.draft.reps||0);
+  const ref = state.beatRef;
+  const win = beats(toCanon(wDisp), reps, ref.refLb, ref.refReps);
+  const refStr = `${fmtNum(gridWeight(ref.refLb))}×${ref.refReps}`;
+  el.className = "beat" + (win ? " win" : "");
+  el.innerHTML = win
+    ? `<span class="ico">💪</span><div>Beating last — set ${ref.num} <span class="ref">(was ${refStr})</span></div>`
+    : `<span class="ico">🎯</span><div>Last set ${ref.num}: <b>${refStr}</b> <span class="ref">— match or beat it</span></div>`;
 }
 
 function stepWeight(dir){
@@ -560,71 +608,49 @@ function addSet(){
   });
   save();
   if(navigator.vibrate) navigator.vibrate(8);
+  if(db.settings.restEnabled) startRest(db.settings.restSeconds);
   renderExercise();
   view.parentElement.scrollTo && view.scrollTo({ top: 0, behavior: "smooth" });
 }
 
-/* ---------- Volume ---------- */
-function weekRange(offset){
-  const now = new Date(); now.setHours(0,0,0,0);
-  const dow = (now.getDay()+6)%7; // Mon=0
-  const monday = new Date(now); monday.setDate(now.getDate() - dow - offset*7);
-  const sunday = new Date(monday); sunday.setDate(monday.getDate()+6);
-  return { start: monday, end: sunday, startStr: dateStr(monday), endStr: dateStr(sunday) };
+/* ---------- Rest timer ---------- */
+const restEl = document.getElementById("restTimer");
+const rtTime = document.getElementById("rtTime");
+const rtFill = document.getElementById("rtFill");
+let restState = null; // { end, total }
+let restTick = null;
+function fmtClock(s){ s = Math.max(0, Math.round(s)); return Math.floor(s/60) + ":" + String(s%60).padStart(2,"0"); }
+function startRest(seconds){
+  restState = { end: Date.now() + seconds*1000, total: seconds };
+  restEl.classList.remove("hidden", "done");
+  paintRest();
+  clearInterval(restTick);
+  restTick = setInterval(paintRest, 250);
 }
-function renderVolume(){
-  const wk = weekRange(state.weekOffset);
-  const counts = {}; MUSCLES.forEach(m => counts[m] = 0);
-  for(const l of db.logs){
-    if(l.date >= wk.startStr && l.date <= wk.endStr){
-      const ex = exById(l.exId); if(!ex) continue;
-      counts[ex.primary] = (counts[ex.primary]||0) + 1;
-      if(ex.secondary) counts[ex.secondary] = (counts[ex.secondary]||0) + 0.5;
-    }
+function paintRest(){
+  if(!restState) return;
+  const remain = (restState.end - Date.now()) / 1000;
+  rtTime.textContent = remain > 0 ? fmtClock(remain) : "Rest done";
+  rtFill.style.width = Math.max(0, Math.min(100, (remain/restState.total)*100)) + "%";
+  if(remain <= 0){
+    restEl.classList.add("done");
+    if(restTick){ clearInterval(restTick); restTick = null; }
+    if(navigator.vibrate) navigator.vibrate([60,40,60]);
+    setTimeout(stopRest, 4000);
   }
-  const label = state.weekOffset === 0 ? "This week" : (state.weekOffset === 1 ? "Last week" : `${state.weekOffset} weeks ago`);
-  const rng = `${shortDate(wk.startStr)} – ${shortDate(wk.endStr)}`;
-
-  let html = `<div class="weeknav">
-    <button data-act="week-prev" aria-label="Older">‹</button>
-    <div class="wk">${label}<small>${rng}</small></div>
-    <button data-act="week-next" aria-label="Newer" ${state.weekOffset===0?"disabled style=\"opacity:.35\"":""}>›</button>
-  </div>`;
-  html += `<div class="legend">
-    <span><span class="dot" style="background:var(--yellow)"></span>Below 10</span>
-    <span><span class="dot" style="background:var(--green)"></span>10–20 target</span>
-    <span><span class="dot" style="background:var(--red)"></span>Above 20</span>
-  </div>`;
-
-  const total = Object.values(counts).reduce((a,b)=>a+b,0);
-  if(total === 0){
-    html += `<div class="empty"><div class="big">📊</div>No sets logged this week yet.<br/>Volume counts working sets per muscle.</div>`;
-  } else {
-    const order = MUSCLES.slice().sort((a,b)=> counts[b]-counts[a]);
-    const MAXBAR = 24;
-    for(const m of order){
-      const c = counts[m];
-      if(c === 0) continue;
-      const color = c < 10 ? "var(--yellow)" : (c <= 20 ? "var(--green)" : "var(--red)");
-      const pct = Math.min(100, (c/MAXBAR)*100);
-      html += `<div class="vol-row">
-        <div class="vol-head"><span class="nm">${m}</span><span class="ct" style="color:${color}">${fmtNum(c)} set${c===1?"":"s"}</span></div>
-        <div class="vol-bar">
-          <div class="fill" style="width:${pct}%;background:${color}"></div>
-          <div class="band" style="left:${(10/MAXBAR)*100}%"></div>
-          <div class="band" style="left:${(20/MAXBAR)*100}%"></div>
-        </div>
-      </div>`;
-    }
-    html += `<div class="card" style="margin-top:8px"><div class="row between">
-      <span class="muted">Total weekly sets</span><b>${fmtNum(total)}</b></div></div>`;
-    // Muscles with no volume
-    const missing = MUSCLES.filter(m => counts[m] === 0);
-    if(missing.length){
-      html += `<div class="muted" style="font-size:13px;padding:4px 4px">Untrained: ${missing.join(", ")}</div>`;
-    }
-  }
-  view.innerHTML = html;
+}
+function adjustRest(delta){
+  if(!restState){ startRest(Math.max(15, (db.settings.restSeconds||DEFAULT_REST) + delta)); return; }
+  restState.end += delta*1000;
+  restState.total = Math.max(restState.total + delta, 15);
+  restEl.classList.remove("done");
+  if(!restTick) restTick = setInterval(paintRest, 250);
+  paintRest();
+}
+function stopRest(){
+  restState = null;
+  if(restTick){ clearInterval(restTick); restTick = null; }
+  restEl.classList.add("hidden");
 }
 
 /* ---------- Progress ---------- */
@@ -641,34 +667,37 @@ function renderProgress(){
     state.chartExId = best;
   }
 
-  let html = `<h2 class="sec">e1RM over time</h2>`;
-  html += `<select class="picker" id="chartEx">`;
+  const metric = state.chartMetric;
+  let html = `<select class="picker" id="chartEx">`;
   trained.slice().sort((a,b)=>a.name.localeCompare(b.name)).forEach(e => {
     html += `<option value="${e.id}" ${e.id===state.chartExId?"selected":""}>${escHtml(e.name)}</option>`;
   });
   html += `</select>`;
+  html += `<div class="seg-toggle">
+    <button data-act="metric" data-m="weight" class="${metric==="weight"?"active":""}">Heaviest weight</button>
+    <button data-act="metric" data-m="volume" class="${metric==="volume"?"active":""}">Session volume</button>
+  </div>`;
   html += `<canvas id="chart" width="640" height="300" style="margin-bottom:16px"></canvas>`;
 
   // PR board
   html += `<h2 class="sec">PR board</h2>`;
   const rows = trained.map(e => {
     const ls = logsFor(e.id);
-    let bestE = 0, bestEset=null, bestW = 0, bestWset=null;
-    for(const l of ls){
-      const ev = e1rmLb(l.weight, l.reps);
-      if(ev > bestE){ bestE = ev; bestEset = l; }
-      if(l.weight > bestW){ bestW = l.weight; bestWset = l; }
-    }
+    // heaviest set (weight, then reps as tiebreak)
+    const heavy = ls.reduce((a,b)=> b.weight > a.weight || (b.weight===a.weight && b.reps>a.reps) ? b : a);
+    // best single-session volume
+    let bestVol = 0;
+    for(const s of sessionsFor(e.id)){ const v = s.sets.reduce((t,l)=> t + setVol(l.weight,l.reps), 0); if(v>bestVol) bestVol = v; }
     const lastTs = Math.max(...ls.map(l=>l.ts ? new Date(l.ts).getTime():0));
     const lastDate = ls[ls.length-1].date;
-    return { e, bestE, bestEset, bestW, bestWset, lastDate, lastTs };
+    return { e, heavy, bestVol, lastDate, lastTs };
   }).sort((a,b)=> b.lastTs - a.lastTs);
 
   rows.forEach(r => {
     html += `<div class="pr-item">
       <div><div class="nm">${escHtml(r.e.name)}</div>
-        <div class="sub">Best ${fmtNum(gridWeight(r.bestW))} ${unitLabel()} × ${r.bestWset.reps} · last ${escHtml(shortDate(r.lastDate))}</div></div>
-      <div class="vals"><div class="big">${fmtNum(toDisp(r.bestE))} ${unitLabel()}</div><div class="sub">best e1RM</div></div>
+        <div class="sub">Best session ${fmtInt(r.bestVol)} ${unitLabel()} vol · last ${escHtml(shortDate(r.lastDate))}</div></div>
+      <div class="vals"><div class="big">${fmtNum(gridWeight(r.heavy.weight))} × ${r.heavy.reps}</div><div class="sub">heaviest set</div></div>
     </div>`;
   });
   view.innerHTML = html;
@@ -689,10 +718,12 @@ function drawChart(){
   ctx.scale(ratio, ratio);
   ctx.clearRect(0,0,cssW,cssH);
 
-  // best e1RM per session
+  // metric per session: heaviest weight, or total volume
   const sess = sessionsFor(state.chartExId).map(s => ({
     date: s.date,
-    val: toDisp(Math.max(...s.sets.map(l => e1rmLb(l.weight,l.reps)))),
+    val: state.chartMetric === "volume"
+      ? s.sets.reduce((t,l)=> t + setVol(l.weight,l.reps), 0)
+      : toDisp(Math.max(...s.sets.map(l => l.weight))),
   }));
   const pad = { l: 44, r: 12, t: 16, b: 26 };
   const W = cssW - pad.l - pad.r, H = cssH - pad.t - pad.b;
@@ -761,11 +792,21 @@ function renderSettings(){
   const persisted = state.persisted;
   const custom = db.exercises.filter(e => e.custom);
 
+  const rs = db.settings.restSeconds || DEFAULT_REST;
   m.innerHTML = `
     <div class="field-label">Units</div>
     <div class="seg">
       <button data-act="unit" data-u="lb" class="${unit()==="lb"?"active":""}">lb</button>
       <button data-act="unit" data-u="kg" class="${unit()==="kg"?"active":""}">kg</button>
+    </div>
+
+    <div class="field-label">Rest timer</div>
+    <div class="seg">
+      <button data-act="rest-toggle" data-v="on" class="${db.settings.restEnabled?"active":""}">Auto-start: On</button>
+      <button data-act="rest-toggle" data-v="off" class="${!db.settings.restEnabled?"active":""}">Off</button>
+    </div>
+    <div class="seg" style="margin-top:8px;${db.settings.restEnabled?"":"opacity:0.4;pointer-events:none"}">
+      ${[60,90,120,180].map(s=>`<button data-act="rest-dur" data-s="${s}" class="${rs===s?"active":""}">${fmtClock(s)}</button>`).join("")}
     </div>
 
     <div class="field-label">Backup &amp; restore</div>
@@ -783,14 +824,12 @@ function renderSettings(){
 
     <div class="field-label">Exercise library</div>
     <button class="ghost-btn" data-act="add-exercise" style="margin-bottom:12px">+ Add custom exercise</button>
-    ${custom.length ? `<div class="muted" style="font-size:12px;margin:0 4px 8px">Your custom exercises</div>` +
-      custom.map(e => `<div class="list-mini">
-        <div><div style="font-weight:600">${escHtml(e.name)}</div>
-        <div class="muted" style="font-size:12px">${escHtml(e.secondary?e.primary+" · "+e.secondary:e.primary)}</div></div>
+    ${db.exercises.length ? `<div class="muted" style="font-size:12px;margin:0 4px 8px">Your exercises (${db.exercises.length})</div>` +
+      db.exercises.slice().sort((a,b)=>a.name.localeCompare(b.name)).map(e => `<div class="list-mini">
+        <div style="font-weight:600">${escHtml(e.name)}${e.custom?'':' <span class="muted" style="font-weight:500;font-size:12px">· built-in</span>'}</div>
         <div class="row"><button class="small-btn" data-act="edit-exercise" data-id="${e.id}">Edit</button></div>
       </div>`).join("")
-      : `<div class="muted" style="font-size:13px;margin:0 4px 8px">No custom exercises yet. The library has ${db.exercises.length} lifts you can also edit by tapping below.</div>`}
-    <button class="ghost-btn" data-act="browse-edit" style="margin-top:4px">Edit any library exercise</button>
+      : `<div class="muted" style="font-size:13px;margin:0 4px 8px">No exercises yet — add your first above.</div>`}
 
     <div class="field-label">Danger zone</div>
     <button class="ghost-btn" data-act="reset-all" style="color:#ff8a8a;border-color:#5a2a3a">Erase all data</button>
@@ -813,44 +852,14 @@ function openExerciseEditor(exId){
     <main>
       <div class="field-label">Name</div>
       <input class="text-input" id="exName" placeholder="e.g. Cable Crossover" value="${ex?escAttr(ex.name):""}" />
-      <div class="field-label">Primary muscle (counts 1 set)</div>
-      <select class="picker" id="exPrimary">
-        ${MUSCLES.map(mu=>`<option ${ex&&ex.primary===mu?"selected":""}>${mu}</option>`).join("")}
-      </select>
-      <div class="field-label">Secondary muscle (counts 0.5, optional)</div>
-      <select class="picker" id="exSecondary">
-        <option value="">None</option>
-        ${MUSCLES.map(mu=>`<option ${ex&&ex.secondary===mu?"selected":""}>${mu}</option>`).join("")}
-      </select>
-      <div style="height:10px"></div>
+      <div style="height:16px"></div>
       <button class="big-accent-btn" data-act="save-exercise" data-id="${exId||""}">Save</button>
       ${ex&&ex.custom?`<button class="ghost-btn" data-act="delete-exercise" data-id="${exId}" style="margin-top:10px;color:#ff8a8a;border-color:#5a2a3a">Delete exercise</button>`:""}
-      ${ex&&!ex.custom?`<div class="muted" style="font-size:12px;margin-top:12px;text-align:center">Built-in exercise — you can edit its muscle mapping; it can't be deleted.</div>`:""}
+      ${ex&&!ex.custom?`<div class="muted" style="font-size:12px;margin-top:12px;text-align:center">Built-in exercise — rename it freely; it can't be deleted.</div>`:""}
       <div style="height:30px"></div>
     </main>`;
   document.body.appendChild(ov);
-  const ps = document.getElementById("exPrimary");
-  if(!ex) ps.value = "Chest";
-}
-function openBrowseEdit(){
-  const ov = document.createElement("div");
-  ov.className = "overlay"; ov.id = "browseEditOverlay";
-  ov.innerHTML = `
-    <header><button class="back" data-act="close-overlay">‹</button><div class="title">Edit library</div></header>
-    <main><input class="search" id="brSearch" placeholder="Search…" /><div id="brList"></div></main>`;
-  document.body.appendChild(ov);
-  const renderList = (q="") => {
-    const list = document.getElementById("brList");
-    const items = db.exercises.slice().sort((a,b)=>a.name.localeCompare(b.name))
-      .filter(e => !q || e.name.toLowerCase().includes(q.toLowerCase()));
-    list.innerHTML = items.map(e=>`<div class="list-mini">
-      <div><div style="font-weight:600">${escHtml(e.name)}</div>
-      <div class="muted" style="font-size:12px">${escHtml(e.secondary?e.primary+" · "+e.secondary:e.primary)}${e.custom?" · custom":""}</div></div>
-      <button class="small-btn" data-act="edit-exercise" data-id="${e.id}">Edit</button>
-    </div>`).join("");
-  };
-  renderList();
-  document.getElementById("brSearch").addEventListener("input", e => renderList(e.target.value));
+  setTimeout(()=>{ const n=document.getElementById("exName"); if(n && !ex) n.focus(); }, 50);
 }
 function closeTopOverlay(){
   const ovs = document.querySelectorAll(".overlay");
@@ -883,7 +892,7 @@ fileInput.addEventListener("change", () => {
       if(!d || !Array.isArray(d.exercises) || !Array.isArray(d.logs)) throw new Error("bad");
       if(!confirm(`Restore ${d.logs.length} sets and ${d.exercises.length} exercises? This replaces current data.`)) return;
       db = d;
-      db.settings = Object.assign({ unit:"lb", lastBackup:null }, db.settings||{});
+      db.settings = Object.assign({ unit:"lb", lastBackup:null, restSeconds:DEFAULT_REST, restEnabled:true }, db.settings||{});
       save();
       state.exId = null; state.editingLogId = null; state.draft = { weight:null, reps:8, rir:"" };
       document.querySelectorAll(".overlay").forEach(o=>o.remove());
@@ -942,8 +951,15 @@ document.addEventListener("click", (e) => {
       save(); renderExercise(); break;
     case "done-edit": state.editingLogId = null; renderExercise(); break;
 
-    case "week-prev": state.weekOffset++; renderVolume(); break;
-    case "week-next": if(state.weekOffset>0){ state.weekOffset--; renderVolume(); } break;
+    case "metric": state.chartMetric = el.dataset.m; renderProgress(); break;
+
+    case "rest-minus": adjustRest(-15); break;
+    case "rest-plus": adjustRest(15); break;
+    case "rest-skip": stopRest(); break;
+    case "rest-toggle":
+      db.settings.restEnabled = el.dataset.v === "on"; save(); renderSettings(); break;
+    case "rest-dur":
+      db.settings.restSeconds = parseInt(el.dataset.s); save(); renderSettings(); break;
 
     case "export": exportBackup(); break;
     case "restore": fileInput.click(); break;
@@ -955,7 +971,6 @@ document.addEventListener("click", (e) => {
 
     case "add-exercise": openExerciseEditor(null); break;
     case "edit-exercise": openExerciseEditor(id); break;
-    case "browse-edit": openBrowseEdit(); break;
     case "save-exercise": saveExercise(id); break;
     case "delete-exercise": deleteExercise(id); break;
     case "reset-all": resetAll(); break;
@@ -964,21 +979,17 @@ document.addEventListener("click", (e) => {
 
 function saveExercise(exId){
   const name = document.getElementById("exName").value.trim();
-  const primary = document.getElementById("exPrimary").value;
-  const secondaryRaw = document.getElementById("exSecondary").value;
-  const secondary = secondaryRaw && secondaryRaw !== primary ? secondaryRaw : null;
   if(!name){ toast("Enter a name"); return; }
   if(exId){
     const ex = exById(exId);
-    if(ex){ ex.name = name; ex.primary = primary; ex.secondary = secondary; }
+    if(ex){ ex.name = name; }
   } else {
     let nid = slug(name) || uid();
     if(exById(nid)) nid = nid + "-" + uid().slice(0,4);
-    db.exercises.push({ id: nid, name, primary, secondary, custom: true });
+    db.exercises.push({ id: nid, name, custom: true });
   }
   save();
   document.getElementById("exEditorOverlay")?.remove();
-  if(document.getElementById("brList")) document.getElementById("browseEditOverlay")?.remove();
   if(document.getElementById("settingsMain")) renderSettings();
   render();
   toast("Exercise saved");

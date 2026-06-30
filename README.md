@@ -8,32 +8,34 @@ No accounts. No backend. No paid services. Works **offline** from the home scree
 Your data stays on your device.
 
 <p align="center">
+  <img src="docs/screenshot-picker.png" width="30%" alt="Exercise picker" />
   <img src="docs/screenshot-log.png" width="30%" alt="Logging screen" />
-  <img src="docs/screenshot-volume.png" width="30%" alt="Weekly volume" />
   <img src="docs/screenshot-progress.png" width="30%" alt="Progress & PRs" />
 </p>
 
 ## The core loop (frictionless logging)
 
 1. Tap an exercise → the **Last time** card shows your previous session up top
-   (e.g. `155×8, 155×8, 155×7` with the date).
-2. The next set is **pre-filled** with last session's weight and reps.
+   (e.g. `130×10, 130×9, 130×8` with the date).
+2. The next set is **pre-filled** with last session's weight and reps, and a
+   **beat-last-time** line tells you the set to beat — it turns **green** the moment
+   today's set beats it.
 3. Tap **+ Set** to log it. Three sets ≈ three taps, zero typing in the common case.
+   A **rest timer** auto-starts after each set (adjustable, or off in Settings).
 4. Adjust with **steppers** (±5 lb / ±2.5 kg weight, ±1 rep) or tap a number to type.
    RIR/RPE is optional.
 
 ## Features
 
-- **Log** tab — the fast logging loop above. Tap any logged set to edit it inline.
-- **Volume** tab — weekly **sets-per-muscle**, color-coded to a 10–20 sets/week target
-  band (yellow = below, green = in range, red = above). Each exercise counts 1 set to its
-  primary muscle and 0.5 to an optional secondary. Browse previous weeks.
-- **Progress** tab — **PR board** (best e1RM, best weight, last performed) and an
-  **e1RM-over-time** line chart per exercise.
-- Auto-computed **estimated 1RM** per set (Epley: `weight × (1 + reps/30)`).
-- Starts with a single exercise (**Lat Pulldown**); add and edit your own from
-  **Settings → Add custom exercise**, with primary/secondary muscle mappings.
-- **lb** by default, with a **kg** toggle in Settings.
+- **Log** tab — the fast logging loop above, with beat-last-time feedback, a "beat last"
+  badge on sets that topped last time, and an auto rest timer. Tap any logged set to edit
+  it inline.
+- **Progress** tab — **PR board** (heaviest set + best single-session volume, last
+  performed) and a per-exercise line chart that toggles between **heaviest weight** and
+  **session volume** over time.
+- Starts with a single exercise (**Lat Pulldown**); add, rename, and delete your own from
+  the picker or **Settings → Add custom exercise**. No muscle tagging to fuss with.
+- **lb** by default, with a **kg** toggle in Settings; configurable rest duration.
 - Dark, phone-first UI with large tap targets; designed for one-handed use.
 
 ## Data safety (important)
@@ -105,5 +107,6 @@ node tools/generate-icons.js
 node tools/test-app.mjs
 ```
 Drives a real browser through the acceptance test: pick a previously-trained exercise,
-see last time within one tap, log today's sets with zero typing, plus volume, progress,
-unit toggle, and backup export.
+see last time within one tap, log today's sets with zero typing, beat-last-time feedback,
+rest timer, progress (heaviest/volume) chart, custom exercises, unit toggle, and backup
+export.

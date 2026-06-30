@@ -9,22 +9,22 @@ await new Promise(r=>srv.listen(0,r));const port=srv.address().port;const base=`
 const b=await chromium.launch();const ctx=await b.newContext({viewport:{width:390,height:844},deviceScaleFactor:3});const pg=await ctx.newPage();
 const errs=[];pg.on('pageerror',e=>errs.push(e.message));pg.on('console',m=>{if(m.type()==='error')errs.push(m.text());});
 await pg.goto(base,{waitUntil:'networkidle'});
-// create storage + add a couple exercises and last-week data
-await pg.locator('.ex-item',{hasText:'Lat Pulldown'}).first().click();await pg.locator('[data-act=add-set]').click();await pg.locator('[data-act=back]').click();await pg.waitForTimeout(50);
+await pg.locator('.ex-item',{hasText:'Lat Pulldown'}).first().click();await pg.locator('[data-act=add-set]').click();await pg.locator('button.rt-x').click();await pg.locator('[data-act=back]').click();await pg.waitForTimeout(50);
 await pg.evaluate(()=>{const KEY='gymlog.v1';const d=JSON.parse(localStorage.getItem(KEY));d.logs=[];
-  d.exercises.push({id:'seated-cable-row',name:'Seated Cable Row',primary:'Back',secondary:'Biceps',custom:true});
-  d.exercises.push({id:'incline-db-press',name:'Incline Dumbbell Press',primary:'Chest',secondary:'Shoulders',custom:true});
-  const mk=(id,daysAgo,sets)=>{const ds=new Date(Date.now()-daysAgo*86400000);const dstr=ds.toISOString().slice(0,10);
-    sets.forEach((s,i)=>d.logs.push({id:Math.random().toString(36).slice(2),exId:id,date:dstr,ts:new Date(ds.getTime()+i*6e4).toISOString(),weight:s[0],reps:s[1],rir:s[2]??''}));};
+  d.exercises.push({id:'seated-cable-row',name:'Seated Cable Row',custom:true});
+  d.exercises.push({id:'incline-db-press',name:'Incline Dumbbell Press',custom:true});
+  const mk=(id,daysAgo,sets)=>{const ds=new Date(Date.now()-daysAgo*864e5);const dstr=ds.toISOString().slice(0,10);sets.forEach((s,i)=>d.logs.push({id:Math.random().toString(36).slice(2),exId:id,date:dstr,ts:new Date(ds.getTime()+i*6e4).toISOString(),weight:s[0],reps:s[1],rir:s[2]??''}));};
   mk('lat-pulldown',9,[[120,10,2],[120,10,2],[120,9,1]]);mk('lat-pulldown',2,[[130,10,2],[130,9,1],[130,8,1]]);
   mk('seated-cable-row',2,[[140,12,2],[140,11,1]]);mk('incline-db-press',1,[[60,10,2],[60,9,1]]);
   localStorage.setItem(KEY,JSON.stringify(d));});
 await pg.reload({waitUntil:'networkidle'});
 await pg.screenshot({path:'docs/screenshot-picker.png'});
-await pg.locator('.ex-item',{hasText:'Lat Pulldown'}).first().click();await pg.waitForTimeout(200);
-await pg.locator('[data-act=add-set]').click();await pg.locator('[data-act=add-set]').click();await pg.waitForTimeout(200);
+// log view with a today set (to show beat badge + rest timer) and beat line
+await pg.locator('.ex-item',{hasText:'Lat Pulldown'}).first().click();await pg.waitForTimeout(150);
+await pg.locator('[data-act=w-inc]').click();await pg.locator('[data-act=w-inc]').click();await pg.locator('[data-act=add-set]').click();await pg.waitForTimeout(150);
 await pg.screenshot({path:'docs/screenshot-log.png'});
-await pg.locator('[data-tab=volume]').click();await pg.waitForTimeout(200);await pg.screenshot({path:'docs/screenshot-volume.png'});
+// progress
+await pg.locator('button.rt-x').click().catch(()=>{});
 await pg.locator('[data-tab=progress]').click();await pg.waitForTimeout(300);await pg.screenshot({path:'docs/screenshot-progress.png'});
 console.log('errors:',errs.length?errs.join('|'):'none');
 await b.close();srv.close();console.log('shots done');
