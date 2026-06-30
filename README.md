@@ -28,11 +28,18 @@ Your data stays on your device.
 ## Features
 
 - **Log** tab — the fast logging loop above, with beat-last-time feedback, a "beat last"
-  badge on sets that topped last time, and an auto rest timer. Tap any logged set to edit
-  it inline.
+  badge on sets that topped last time, and an auto **rest timer** that glows down
+  violet → amber → green and pulses when you're ready. Tap a logged set to edit it inline,
+  or **swipe it left to delete**.
+- **Exercise picker** shows each lift's **last weight** as a chip and when you last did it,
+  so you can scan your routine fast.
+- **History** — tap the **Last time** card to see every past session for that exercise,
+  with a mini chart (heaviest weight or session volume).
 - **Progress** tab — **PR board** (heaviest set + best single-session volume, last
   performed) and a per-exercise line chart that toggles between **heaviest weight** and
   **session volume** over time.
+- **Installs like a native app** — proper iOS home-screen icon and **launch screens**
+  (no white flash on open), full-screen standalone, works offline.
 - Starts with a single exercise (**Lat Pulldown**); add, rename, and delete your own from
   the picker or **Settings → Add custom exercise**. No muscle tagging to fuss with.
 - **lb** by default, with a **kg** toggle in Settings; configurable rest duration.
@@ -62,9 +69,11 @@ index.html
 sw.js
 manifest.webmanifest
 icon-180.png  icon-192.png  icon-512.png
+splash/          (iOS launch-screen images)
 ```
 
-(`docs/` and `tools/` are not needed at runtime.)
+(`docs/` and `tools/` are not needed at runtime. Regenerate icons + splash with
+`node tools/generate-icons.js`.)
 
 ### Netlify Drop (easiest)
 1. Go to <https://app.netlify.com/drop>.

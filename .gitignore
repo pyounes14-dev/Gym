@@ -1,3 +1,6 @@
 # test artifact
 tools/screenshot-log.png
 .DS_Store
+# splash generator helper outputs
+splash/_links.html
+splash/_cache.txt

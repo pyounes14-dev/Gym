@@ -11,6 +11,18 @@
 <link rel="manifest" href="./manifest.webmanifest" />
 <link rel="apple-touch-icon" href="./icon-180.png" />
 <link rel="icon" type="image/png" href="./icon-192.png" />
+<!-- iOS launch screens (avoids the white flash on open) -->
+<link rel="apple-touch-startup-image" media="(device-width:440px) and (device-height:956px) and (-webkit-device-pixel-ratio:3) and (orientation:portrait)" href="./splash/splash-1320x2868.png" />
+<link rel="apple-touch-startup-image" media="(device-width:402px) and (device-height:874px) and (-webkit-device-pixel-ratio:3) and (orientation:portrait)" href="./splash/splash-1206x2622.png" />
+<link rel="apple-touch-startup-image" media="(device-width:430px) and (device-height:932px) and (-webkit-device-pixel-ratio:3) and (orientation:portrait)" href="./splash/splash-1290x2796.png" />
+<link rel="apple-touch-startup-image" media="(device-width:393px) and (device-height:852px) and (-webkit-device-pixel-ratio:3) and (orientation:portrait)" href="./splash/splash-1179x2556.png" />
+<link rel="apple-touch-startup-image" media="(device-width:428px) and (device-height:926px) and (-webkit-device-pixel-ratio:3) and (orientation:portrait)" href="./splash/splash-1284x2778.png" />
+<link rel="apple-touch-startup-image" media="(device-width:390px) and (device-height:844px) and (-webkit-device-pixel-ratio:3) and (orientation:portrait)" href="./splash/splash-1170x2532.png" />
+<link rel="apple-touch-startup-image" media="(device-width:375px) and (device-height:812px) and (-webkit-device-pixel-ratio:3) and (orientation:portrait)" href="./splash/splash-1125x2436.png" />
+<link rel="apple-touch-startup-image" media="(device-width:414px) and (device-height:896px) and (-webkit-device-pixel-ratio:3) and (orientation:portrait)" href="./splash/splash-1242x2688.png" />
+<link rel="apple-touch-startup-image" media="(device-width:414px) and (device-height:896px) and (-webkit-device-pixel-ratio:2) and (orientation:portrait)" href="./splash/splash-828x1792.png" />
+<link rel="apple-touch-startup-image" media="(device-width:414px) and (device-height:736px) and (-webkit-device-pixel-ratio:3) and (orientation:portrait)" href="./splash/splash-1242x2208.png" />
+<link rel="apple-touch-startup-image" media="(device-width:375px) and (device-height:667px) and (-webkit-device-pixel-ratio:2) and (orientation:portrait)" href="./splash/splash-750x1334.png" />
 <title>Gym Log</title>
 <style>
   :root {
@@ -124,7 +136,12 @@
   .ex-item .nm { font-size: 16px; font-weight: 650; }
   .ex-item .mu { font-size: 12px; color: var(--muted); margin-top: 3px;
     white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
-  .ex-item .chev { color: var(--accent2); font-size: 20px; opacity: 0.7; }
+  .ex-item .ex-right { display: flex; align-items: center; gap: 9px; flex: none; }
+  .ex-item .chev { color: var(--accent2); font-size: 20px; opacity: 0.6; }
+  .wt-chip { background: rgba(124,92,255,0.16); color: var(--accent2); font-weight: 800; font-size: 14px;
+    padding: 7px 11px; border-radius: 11px; white-space: nowrap; }
+  .new-chip { background: var(--card2); color: var(--muted); font-weight: 700; font-size: 11px;
+    padding: 5px 10px; border-radius: 999px; letter-spacing: 0.3px; }
 
   /* Last time card */
   .lasttime { position: relative; overflow: hidden; padding: 17px;
@@ -136,10 +153,21 @@
     text-transform: uppercase; }
   .lasttime .sets { font-size: 27px; font-weight: 800; letter-spacing: -0.5px; margin-top: 8px; line-height: 1.22; }
   .lasttime .date { font-size: 13px; color: var(--muted); margin-top: 8px; }
+  .lasttime .lt-more { float: right; color: var(--accent2); font-size: 11px; font-weight: 700; opacity: 0.85; }
+  .lasttime:active { filter: brightness(1.12); }
+  .hist-row { display: flex; align-items: center; gap: 12px; padding: 13px 14px; background: var(--card);
+    border: 1px solid var(--line); border-radius: 14px; margin-bottom: 8px; }
+  .hist-row .hd { width: 64px; flex: none; font-weight: 700; font-size: 13px; color: var(--accent2); }
+  .hist-row .hs { flex: 1; min-width: 0; font-weight: 650; font-size: 15px; }
+  .hist-row .hv { font-size: 11px; color: var(--muted); margin-top: 2px; }
 
   /* Today set rows */
+  .set-swipe { position: relative; border-radius: 14px; overflow: hidden; margin-bottom: 8px; }
+  .set-swipe .swipe-bg { position: absolute; inset: 0; background: var(--red); display: flex;
+    align-items: center; justify-content: flex-end; padding-right: 22px; color: #fff; font-weight: 800; font-size: 14px; }
+  .set-swipe .set-row { margin-bottom: 0; touch-action: pan-y; will-change: transform; }
   .set-row { display: flex; align-items: center; gap: 11px; padding: 12px 12px;
-    border-radius: 14px; background: var(--card2); margin-bottom: 8px; border: 1px solid var(--line);
+    border-radius: 14px; background: var(--card2); border: 1px solid var(--line);
     transition: border-color 0.15s; }
   .set-row.editing { border-color: var(--accent); box-shadow: 0 0 0 3px rgba(124,92,255,0.15); }
   .set-row .idx { width: 28px; height: 28px; border-radius: 9px; background: var(--accent-grad);
@@ -203,7 +231,12 @@
     background: linear-gradient(135deg, #20254f, #171b36); border: 1px solid var(--accent);
     border-radius: 18px; box-shadow: var(--shadow-lg);
     animation: viewIn 0.2s ease both; }
-  .rest-timer.done { border-color: var(--green); }
+  .rest-timer.done { border-color: var(--green); animation: restPulse 1.1s ease-in-out 3; }
+  @keyframes restPulse {
+    0%,100% { box-shadow: var(--shadow-lg), 0 0 0 0 rgba(46,204,113,0.45); }
+    50% { box-shadow: var(--shadow-lg), 0 0 0 7px rgba(46,204,113,0); }
+  }
+  .rest-timer .rt-fill { transition: width 0.9s linear, background 0.6s ease; }
   .rest-timer .rt-adj { width: 56px; flex: none; border-radius: 12px; background: rgba(255,255,255,0.06);
     font-size: 15px; font-weight: 800; color: var(--accent2); }
   .rest-timer .rt-adj:active { background: rgba(255,255,255,0.14); }
@@ -433,10 +466,16 @@ function debouncedPicker(){
 }
 function exItemHTML(e){
   const last = lastSession(e.id, null);
-  const sub = last ? `Last ${shortDate(last.date)} · ${setSummary(last.sets)}` : "Not yet logged";
+  let chip = `<span class="new-chip">New</span>`;
+  let sub = "Not yet logged";
+  if(last){
+    const heavy = last.sets.reduce((a,b)=> b.weight>a.weight||(b.weight===a.weight&&b.reps>a.reps) ? b : a);
+    chip = `<span class="wt-chip">${fmtNum(gridWeight(heavy.weight))} ${unitLabel()}</span>`;
+    sub = `Last ${shortDate(last.date)} · ${last.sets.length} set${last.sets.length>1?"s":""}`;
+  }
   return `<button class="ex-item" data-act="pick" data-id="${e.id}">
     <div style="min-width:0"><div class="nm">${escHtml(e.name)}</div><div class="mu">${escHtml(sub)}</div></div>
-    <div class="chev">›</div>
+    <div class="ex-right">${chip}<span class="chev">›</span></div>
   </button>`;
 }
 
@@ -459,8 +498,9 @@ function renderExercise(){
   if(last){
     const heavy = last.sets.reduce((a,b)=> b.weight > a.weight || (b.weight===a.weight && b.reps>a.reps) ? b : a);
     const vol = last.sets.reduce((s,l)=> s + setVol(l.weight,l.reps), 0);
-    html += `<div class="card lasttime">
-      <div class="lbl">Last time · ${escHtml(shortDate(last.date))}</div>
+    const hasHistory = sessionsFor(ex.id).filter(s=>s.date!==todayStr()).length > 1;
+    html += `<div class="card lasttime" data-act="history" data-id="${ex.id}">
+      <div class="lbl">Last time · ${escHtml(shortDate(last.date))} ${hasHistory?`<span class="lt-more">history ›</span>`:""}</div>
       <div class="sets">${escHtml(setSummary(last.sets))}</div>
       <div class="date">${last.sets.length} set${last.sets.length>1?"s":""} · top ${fmtNum(gridWeight(heavy.weight))}×${heavy.reps} · ${fmtInt(vol)} ${unitLabel()} volume</div>
     </div>`;
@@ -476,11 +516,14 @@ function renderExercise(){
       const editing = l.id === state.editingLogId;
       const ref = refFor(i);
       const win = ref && beats(l.weight, l.reps, ref.weight, ref.reps);
-      html += `<div class="set-row ${editing?"editing":""}" data-act="edit-log" data-id="${l.id}">
-        <div class="idx">${i+1}</div>
-        <div class="wr">${fmtNum(gridWeight(l.weight))} ${unitLabel()} × ${l.reps}${l.rir!==""&&l.rir!=null?` <span class="e1">@${l.rir} RIR</span>`:""}
-          ${win?`<span class="win-badge">↑ beat last</span>`:""}</div>
-        <button class="del" data-act="del-log" data-id="${l.id}" aria-label="Delete">✕</button>
+      html += `<div class="set-swipe">
+        <div class="swipe-bg"><span>Delete ✕</span></div>
+        <div class="set-row ${editing?"editing":""}" data-act="edit-log" data-id="${l.id}">
+          <div class="idx">${i+1}</div>
+          <div class="wr">${fmtNum(gridWeight(l.weight))} ${unitLabel()} × ${l.reps}${l.rir!==""&&l.rir!=null?` <span class="e1">@${l.rir} RIR</span>`:""}
+            ${win?`<span class="win-badge">↑ beat last</span>`:""}</div>
+          <button class="del" data-act="del-log" data-id="${l.id}" aria-label="Delete">✕</button>
+        </div>
       </div>`;
     });
   }
@@ -530,6 +573,40 @@ function renderExercise(){
   view.innerHTML = html;
   updateBeatLine();
   wireSetInputs();
+  wireSwipe();
+}
+
+let lastSwipe = 0;
+function deleteLog(id){
+  db.logs = db.logs.filter(l => l.id !== id);
+  if(state.editingLogId === id) state.editingLogId = null;
+  save(); renderExercise();
+}
+function wireSwipe(){
+  document.querySelectorAll(".set-swipe .set-row").forEach(row => {
+    let startX = 0, dx = 0, dragging = false;
+    row.addEventListener("touchstart", e => {
+      startX = e.touches[0].clientX; dx = 0; dragging = true; row.style.transition = "none";
+    }, { passive: true });
+    row.addEventListener("touchmove", e => {
+      if(!dragging) return;
+      dx = e.touches[0].clientX - startX;
+      if(dx > 0) dx = 0; if(dx < -160) dx = -160;
+      row.style.transform = `translateX(${dx}px)`;
+    }, { passive: true });
+    row.addEventListener("touchend", () => {
+      if(!dragging) return; dragging = false;
+      row.style.transition = "";
+      if(Math.abs(dx) > 6) lastSwipe = Date.now(); // suppress the tap-to-edit that follows
+      const id = row.dataset.id;
+      if(dx < -80){
+        row.style.transform = "translateX(-110%)";
+        setTimeout(() => deleteLog(id), 130);
+      } else {
+        row.style.transform = "";
+      }
+    });
+  });
 }
 
 function wireSetInputs(){
@@ -630,8 +707,14 @@ function startRest(seconds){
 function paintRest(){
   if(!restState) return;
   const remain = (restState.end - Date.now()) / 1000;
-  rtTime.textContent = remain > 0 ? fmtClock(remain) : "Rest done";
-  rtFill.style.width = Math.max(0, Math.min(100, (remain/restState.total)*100)) + "%";
+  const frac = remain / restState.total;
+  rtTime.textContent = remain > 0 ? fmtClock(remain) : "Rest done — go!";
+  rtFill.style.width = Math.max(0, Math.min(100, frac*100)) + "%";
+  // glow-down: violet while plenty of rest, amber as it runs low, green when ready
+  const col = remain <= 0 ? "#2ecc71" : frac > 0.5 ? "#a892ff" : frac > 0.15 ? "#f0b429" : "#2ecc71";
+  rtFill.style.background = col;
+  restEl.style.borderColor = col;
+  rtTime.style.color = remain <= 0 ? "#74e3a3" : "";
   if(remain <= 0){
     restEl.classList.add("done");
     if(restTick){ clearInterval(restTick); restTick = null; }
@@ -710,14 +793,6 @@ function renderProgress(){
 function drawChart(){
   const cv = document.getElementById("chart");
   if(!cv) return;
-  const ratio = window.devicePixelRatio || 1;
-  const cssW = cv.clientWidth || 320, cssH = 200;
-  cv.style.height = cssH + "px";
-  cv.width = cssW * ratio; cv.height = cssH * ratio;
-  const ctx = cv.getContext("2d");
-  ctx.scale(ratio, ratio);
-  ctx.clearRect(0,0,cssW,cssH);
-
   // metric per session: heaviest weight, or total volume
   const sess = sessionsFor(state.chartExId).map(s => ({
     date: s.date,
@@ -725,6 +800,17 @@ function drawChart(){
       ? s.sets.reduce((t,l)=> t + setVol(l.weight,l.reps), 0)
       : toDisp(Math.max(...s.sets.map(l => l.weight))),
   }));
+  drawLineChart(cv, sess);
+}
+function drawLineChart(cv, sess, cssH){
+  const ratio = window.devicePixelRatio || 1;
+  const cssW = cv.clientWidth || 320; cssH = cssH || 200;
+  cv.style.height = cssH + "px";
+  cv.width = cssW * ratio; cv.height = cssH * ratio;
+  const ctx = cv.getContext("2d");
+  ctx.scale(ratio, ratio);
+  ctx.clearRect(0,0,cssW,cssH);
+
   const pad = { l: 44, r: 12, t: 16, b: 26 };
   const W = cssW - pad.l - pad.r, H = cssH - pad.t - pad.b;
 
@@ -769,6 +855,47 @@ function drawChart(){
   // points
   ctx.fillStyle = "#fff";
   sess.forEach((s,i)=>{ ctx.beginPath(); ctx.arc(x(i),y(s.val),3.5,0,Math.PI*2); ctx.fill(); });
+}
+
+/* ============================ History overlay ============================ */
+let historyExId = null;
+function openHistory(exId){
+  const ex = exById(exId); if(!ex) return;
+  historyExId = exId;
+  const sess = sessionsFor(exId).slice().reverse(); // newest first
+  const ov = document.createElement("div");
+  ov.className = "overlay"; ov.id = "historyOverlay";
+  let body = `<canvas id="histChart" style="margin-bottom:16px"></canvas>
+    <div class="seg-toggle">
+      <button data-act="hist-metric" data-m="weight" class="${state.chartMetric==="weight"?"active":""}">Heaviest weight</button>
+      <button data-act="hist-metric" data-m="volume" class="${state.chartMetric==="volume"?"active":""}">Session volume</button>
+    </div>
+    <h2 class="sec">All sessions (${sess.length})</h2>`;
+  body += sess.map(s => {
+    const heavy = s.sets.reduce((a,b)=> b.weight>a.weight||(b.weight===a.weight&&b.reps>a.reps)?b:a);
+    const vol = s.sets.reduce((t,l)=> t + setVol(l.weight,l.reps), 0);
+    return `<div class="hist-row">
+      <div class="hd">${escHtml(shortDate(s.date))}</div>
+      <div style="flex:1;min-width:0"><div class="hs">${escHtml(setSummary(s.sets))}</div>
+        <div class="hv">top ${fmtNum(gridWeight(heavy.weight))}×${heavy.reps} · ${fmtInt(vol)} ${unitLabel()} vol</div></div>
+    </div>`;
+  }).join("");
+  ov.innerHTML = `
+    <header><button class="back" data-act="close-overlay">‹</button><div class="title">${escHtml(ex.name)}</div></header>
+    <main>${body}</main>`;
+  document.body.appendChild(ov);
+  drawHistoryChart(exId);
+}
+function drawHistoryChart(exId){
+  const cv = document.getElementById("histChart");
+  if(!cv) return;
+  const sess = sessionsFor(exId).map(s => ({
+    date: s.date,
+    val: state.chartMetric === "volume"
+      ? s.sets.reduce((t,l)=> t + setVol(l.weight,l.reps), 0)
+      : toDisp(Math.max(...s.sets.map(l => l.weight))),
+  }));
+  drawLineChart(cv, sess, 180);
 }
 
 /* ============================ Settings overlay ============================ */
@@ -943,15 +1070,20 @@ document.addEventListener("click", (e) => {
     case "add-set": addSet(); break;
     case "edit-log":
       if(e.target.closest("[data-act=del-log]")) break; // delete handled separately
+      if(Date.now() - lastSwipe < 350) break;           // ignore the tap that ends a swipe
       state.editingLogId = (state.editingLogId === id) ? null : id; renderExercise(); break;
     case "del-log":
       e.stopPropagation();
-      db.logs = db.logs.filter(l => l.id !== id);
-      if(state.editingLogId === id) state.editingLogId = null;
-      save(); renderExercise(); break;
+      deleteLog(id); break;
     case "done-edit": state.editingLogId = null; renderExercise(); break;
 
     case "metric": state.chartMetric = el.dataset.m; renderProgress(); break;
+    case "history": openHistory(id); break;
+    case "hist-metric":
+      state.chartMetric = el.dataset.m;
+      document.querySelectorAll("[data-act=hist-metric]").forEach(b => b.classList.toggle("active", b.dataset.m===el.dataset.m));
+      drawHistoryChart(historyExId);
+      break;
 
     case "rest-minus": adjustRest(-15); break;
     case "rest-plus": adjustRest(15); break;

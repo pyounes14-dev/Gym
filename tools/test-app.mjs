@@ -19,7 +19,7 @@ const port = server.address().port;
 const base = `http://127.0.0.1:${port}/index.html`;
 
 const browser = await chromium.launch({ executablePath: '/opt/pw-browsers/chromium' }).catch(async()=>await chromium.launch());
-const ctx = await browser.newContext({ viewport:{width:390,height:844}, deviceScaleFactor:3 });
+const ctx = await browser.newContext({ viewport:{width:390,height:844}, deviceScaleFactor:3, hasTouch:true });
 const page = await ctx.newPage();
 const errors = [];
 page.on('response', r=>{ if(r.status()>=400) errors.push('http'+r.status()+': '+r.url()); });
@@ -89,6 +89,25 @@ await page.waitForTimeout(60);
 assert(await page.locator('.set-row.editing').count()===1, 'tap-to-edit selects a set');
 await page.locator('[data-act=done-edit]').click();
 
+// ---- History overlay (tap Last-time card) ----
+await page.locator('.lasttime').click();
+await page.waitForTimeout(120);
+assert(await page.locator('.hist-row').count()>=2, 'history overlay lists past sessions');
+assert(await page.locator('#histChart').count()===1, 'history mini-chart renders');
+await page.locator('#historyOverlay .back').click();
+await page.waitForTimeout(60);
+
+// ---- Swipe-to-delete a set ----
+const beforeN = await page.locator('.set-row').count();
+await page.evaluate(()=>{
+  const row=document.querySelector('.set-swipe .set-row');
+  const mk=x=>new Touch({identifier:1,target:row,clientX:x,clientY:10});
+  const fire=(t,x)=>{const tl=t==='touchend'?[]:[mk(x)];row.dispatchEvent(new TouchEvent(t,{bubbles:true,cancelable:true,touches:tl,targetTouches:tl,changedTouches:[mk(x)]}));};
+  fire('touchstart',300);fire('touchmove',200);fire('touchmove',110);fire('touchend',110);
+});
+await page.waitForTimeout(250);
+assert(await page.locator('.set-row').count() < beforeN, 'swipe-to-delete removes a set');
+
 // ---- Progress: heaviest set + volume toggle ----
 await page.locator('[data-tab=progress]').click();
 await page.waitForTimeout(150);
@@ -104,6 +123,7 @@ assert(await page.locator('.seg-toggle button.active', { hasText:'volume' }).cou
 await page.locator('[data-tab=log]').click();
 await page.locator('[data-act=back]').click().catch(()=>{});
 await page.waitForTimeout(60);
+assert(await page.locator('.wt-chip').count()>=1, 'picker shows last-weight chip');
 await page.locator('[data-act=add-exercise]').click();
 await page.waitForTimeout(60);
 assert(await page.locator('#exName').count()===1, 'exercise editor opens');

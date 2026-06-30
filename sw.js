@@ -1,6 +1,6 @@
 // Service worker for true offline use on iOS home screen.
 // Cache-first for the app shell so it loads with no network at the gym.
-const CACHE = 'gymlog-v2';
+const CACHE = 'gymlog-v3';
 const ASSETS = [
   './',
   './index.html',
@@ -8,6 +8,17 @@ const ASSETS = [
   './icon-180.png',
   './icon-192.png',
   './icon-512.png',
+  './splash/splash-1320x2868.png',
+  './splash/splash-1206x2622.png',
+  './splash/splash-1290x2796.png',
+  './splash/splash-1179x2556.png',
+  './splash/splash-1284x2778.png',
+  './splash/splash-1170x2532.png',
+  './splash/splash-1125x2436.png',
+  './splash/splash-1242x2688.png',
+  './splash/splash-828x1792.png',
+  './splash/splash-1242x2208.png',
+  './splash/splash-750x1334.png',
 ];
 
 self.addEventListener('install', (e) => {
