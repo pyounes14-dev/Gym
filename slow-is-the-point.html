@@ -1,0 +1,982 @@
+<title>Slow Is the Point</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Archivo:wght@400;500;600;700;800&family=IBM+Plex+Mono:wght@400;500;600&family=Newsreader:opsz,wght@6..72,400;6..72,600&display=swap">
+
+<style>
+/* ============ tokens: dark-first, light redefined ============ */
+:root{
+  --bg:#0F1217; --surf:#161B22; --surf2:#1D242D; --line:#242C36; --line2:#333D49;
+  --ink:#E8EBF0; --ink2:#B4BCC7; --mut:#79838F;
+  --run:#F0803C; --run-dim:#4A2C18; --walk:#5FA8C7; --walk-dim:#1B3542;
+  --ok:#5FBF8B; --warn:#E0A13C;
+  --shadow:0 1px 0 rgba(255,255,255,.03), 0 18px 40px -28px #000;
+  --lift:0 1px 0 rgba(255,255,255,.04), 0 26px 50px -30px #000;
+}
+@media (prefers-color-scheme: light){
+  :root:not([data-theme="dark"]){
+    --bg:#F2F3F0; --surf:#FFFFFF; --surf2:#EAECE7; --line:#DFE1DB; --line2:#C6CABF;
+    --ink:#15181C; --ink2:#3D444C; --mut:#727A83;
+    --run:#BF5518; --run-dim:#F6E2D4; --walk:#26708F; --walk-dim:#D8E7EE;
+    --ok:#2E7D52; --warn:#8A5D0E;
+    --shadow:0 1px 2px rgba(20,24,28,.05), 0 14px 34px -26px rgba(20,24,28,.5);
+    --lift:0 1px 2px rgba(20,24,28,.06), 0 22px 44px -28px rgba(20,24,28,.55);
+  }
+}
+:root[data-theme="light"]{
+  --bg:#F2F3F0; --surf:#FFFFFF; --surf2:#EAECE7; --line:#DFE1DB; --line2:#C6CABF;
+  --ink:#15181C; --ink2:#3D444C; --mut:#727A83;
+  --run:#BF5518; --run-dim:#F6E2D4; --walk:#26708F; --walk-dim:#D8E7EE;
+  --ok:#2E7D52; --warn:#8A5D0E;
+  --shadow:0 1px 2px rgba(20,24,28,.05), 0 14px 34px -26px rgba(20,24,28,.5);
+  --lift:0 1px 2px rgba(20,24,28,.06), 0 22px 44px -28px rgba(20,24,28,.55);
+}
+
+*{box-sizing:border-box}
+[hidden]{display:none!important}
+html{-webkit-text-size-adjust:100%}
+body{margin:0;background:var(--bg);color:var(--ink);
+  font-family:"Archivo",-apple-system,"Segoe UI",Helvetica,Arial,sans-serif;
+  font-size:16px;line-height:1.5;-webkit-font-smoothing:antialiased;
+  -webkit-tap-highlight-color:transparent}
+button{font-family:inherit;cursor:pointer;touch-action:manipulation;-webkit-user-select:none;user-select:none}
+:focus-visible{outline:2px solid var(--run);outline-offset:2px;border-radius:6px}
+.mono{font-family:"IBM Plex Mono",ui-monospace,Menlo,monospace;font-variant-numeric:tabular-nums}
+.shell{max-width:720px;margin:0 auto;padding:0 18px calc(60px + env(safe-area-inset-bottom))}
+
+/* ============ top bar ============ */
+.bar{position:sticky;top:0;z-index:30;background:var(--bg);border-bottom:1px solid var(--line);
+  display:flex;align-items:center;justify-content:space-between;gap:12px;
+  padding:calc(12px + env(safe-area-inset-top)) 0 11px}
+.brand{font-weight:800;font-size:.92rem;letter-spacing:-.02em;white-space:nowrap}
+.tabs{display:flex;gap:2px;background:var(--surf2);border-radius:100px;padding:3px}
+.tabs button{border:none;background:none;color:var(--mut);font-weight:600;font-size:.78rem;
+  padding:8px 14px;border-radius:100px;transition:background .16s,color .16s}
+.tabs button[aria-selected="true"]{background:var(--surf);color:var(--ink);box-shadow:var(--shadow)}
+
+/* ============ today ============ */
+.today{background:var(--surf);border:1px solid var(--line);border-radius:18px;
+  padding:22px 20px 20px;margin-top:20px;box-shadow:var(--lift);
+  display:flex;flex-direction:column;gap:16px}
+.ey{font-family:"IBM Plex Mono",monospace;font-size:.66rem;letter-spacing:.14em;
+  text-transform:uppercase;color:var(--run);display:flex;align-items:center;gap:8px}
+.ey b{width:6px;height:6px;border-radius:50%;background:var(--run);display:inline-block;flex:0 0 6px}
+.today-t{font-size:clamp(1.55rem,6.4vw,2.15rem);font-weight:800;letter-spacing:-.034em;
+  line-height:1.06;margin:0;text-wrap:balance}
+.facts{display:flex;gap:10px;flex-wrap:wrap}
+.facts span{font-family:"IBM Plex Mono",monospace;font-size:.68rem;letter-spacing:.05em;
+  color:var(--ink2);background:var(--surf2);border-radius:100px;padding:5px 11px}
+.facts b{color:var(--ink);font-weight:600}
+.rib{display:flex;height:9px;gap:1px;border-radius:100px;overflow:hidden;background:var(--line)}
+.rib i{display:block} .rib .r{background:var(--run)} .rib .k{background:var(--walk-dim)}
+.big{border:none;border-radius:14px;background:var(--run);color:#fff;font-weight:700;
+  font-size:1.06rem;letter-spacing:.005em;padding:19px;width:100%;min-height:58px;
+  display:flex;align-items:center;justify-content:center;gap:10px;transition:filter .16s,transform .1s}
+.big:hover{filter:brightness(1.09)}
+.big:active{transform:scale(.985)}
+.lnk{background:none;border:none;color:var(--mut);font-size:.82rem;font-weight:600;
+  padding:10px 4px;margin:-6px auto -4px;display:block;text-decoration:underline;
+  text-decoration-color:var(--line2);text-underline-offset:3px;transition:color .15s}
+.lnk:hover{color:var(--ink2)}
+
+/* resume banner */
+.resume{display:flex;align-items:center;gap:12px;background:var(--surf);
+  border:1px solid var(--run);border-radius:14px;padding:13px 15px;margin-top:12px}
+.resume div{flex:1;min-width:0}
+.resume .rt{font-weight:700;font-size:.88rem;letter-spacing:-.01em}
+.resume .rs{font-family:"IBM Plex Mono",monospace;font-size:.66rem;color:var(--mut);margin-top:2px}
+.resume button{border:none;border-radius:10px;background:var(--run);color:#fff;font-weight:700;
+  font-size:.8rem;padding:11px 15px;min-height:42px}
+.resume .x{background:none;color:var(--mut);border:1px solid var(--line2);padding:11px 12px}
+
+/* progress strip */
+.prog{margin-top:16px;background:var(--surf);border:1px solid var(--line);
+  border-radius:14px;padding:15px 16px 16px}
+.prog-h{display:flex;justify-content:space-between;align-items:baseline;
+  font-family:"IBM Plex Mono",monospace;font-size:.66rem;letter-spacing:.09em;
+  text-transform:uppercase;color:var(--mut)}
+.prog-h b{color:var(--ink);font-weight:600;font-size:.86rem;letter-spacing:.02em}
+.track{height:6px;background:var(--surf2);border-radius:100px;overflow:hidden;margin-top:11px}
+.track i{display:block;height:100%;width:0;background:var(--run);transition:width .45s ease}
+.mini{display:flex;gap:18px;margin-top:12px;font-family:"IBM Plex Mono",monospace;
+  font-size:.63rem;letter-spacing:.07em;text-transform:uppercase;color:var(--mut)}
+.mini b{display:block;color:var(--ink);font-size:1.02rem;font-weight:500;letter-spacing:-.02em;
+  font-variant-numeric:tabular-nums;text-transform:none;margin-bottom:1px}
+
+/* first-run note */
+.first{margin-top:12px;background:var(--surf);border:1px solid var(--line);
+  border-left:3px solid var(--walk);border-radius:0 14px 14px 0;padding:15px 16px}
+.first h3{margin:0 0 8px;font-size:.86rem;font-weight:700;letter-spacing:-.01em}
+.first ul{margin:0;padding-left:1.1em}
+.first li{font-size:.86rem;color:var(--ink2);line-height:1.5;margin-bottom:5px}
+.first li:last-child{margin-bottom:0}
+
+/* save status */
+.save{display:flex;align-items:center;gap:9px;width:100%;text-align:left;
+  background:none;border:none;padding:14px 2px 4px;color:var(--mut);
+  font-family:"IBM Plex Mono",monospace;font-size:.63rem;letter-spacing:.05em}
+.save b{width:6px;height:6px;border-radius:50%;background:var(--mut);flex:0 0 6px}
+.save[data-s="cloud"]{color:var(--ok)} .save[data-s="cloud"] b{background:var(--ok)}
+.save[data-s="saving"] b,.save[data-s="retry"] b{background:var(--run)}
+.save[data-s="local"]{color:var(--warn)} .save[data-s="local"] b{background:var(--warn)}
+.tip{font-family:"IBM Plex Mono",monospace;font-size:.63rem;line-height:1.7;color:var(--mut);
+  border-top:1px solid var(--line);padding-top:14px;margin-top:6px}
+.tip b{color:var(--ink2);font-weight:500}
+
+/* ============ plan list ============ */
+.band{display:flex;align-items:baseline;gap:11px;padding:24px 2px 9px}
+.band-n{font-family:"IBM Plex Mono",monospace;font-size:.62rem;letter-spacing:.13em;
+  text-transform:uppercase;color:var(--mut)}
+.band-t{font-weight:700;font-size:.82rem;color:var(--ink2)}
+.wk{display:grid;grid-template-columns:34px 1fr auto;gap:13px;align-items:center;
+  background:var(--surf);border:1px solid var(--line);border-radius:14px;padding:13px 14px;
+  margin-bottom:7px;scroll-margin-top:78px;transition:border-color .16s,opacity .16s}
+.wk-n span{font-family:"IBM Plex Mono",monospace;font-size:1.1rem;font-weight:500;
+  letter-spacing:-.04em;color:var(--mut)}
+.wk-mid{min-width:0;display:flex;flex-direction:column;gap:6px}
+.wk-t{font-weight:600;font-size:.89rem;letter-spacing:-.012em;line-height:1.25}
+.wk-s{font-family:"IBM Plex Mono",monospace;font-size:.64rem;color:var(--mut);letter-spacing:.03em}
+.wk .rib{height:7px}
+.tagx{display:inline-block;font-family:"IBM Plex Mono",monospace;font-size:.53rem;letter-spacing:.1em;
+  text-transform:uppercase;color:var(--walk);border:1px solid var(--walk);border-radius:100px;
+  padding:1px 7px;margin-left:7px;vertical-align:2px}
+.wk-r{display:flex;align-items:center;gap:9px}
+.cells{display:flex;gap:6px}
+.cell{width:36px;height:36px;border-radius:10px;border:1px solid var(--line2);background:transparent;
+  color:var(--mut);font-family:"IBM Plex Mono",monospace;font-size:.68rem;font-weight:500;
+  display:grid;place-items:center;padding:0;transition:background .15s,color .15s,border-color .15s,transform .1s}
+.cell:hover{border-color:var(--ink2);color:var(--ink)}
+.cell:active{transform:scale(.93)}
+.cell[aria-pressed="true"]{background:var(--run);border-color:var(--run);color:#fff}
+.play{width:36px;height:36px;border-radius:50%;border:1px solid var(--line2);background:transparent;
+  color:var(--mut);display:grid;place-items:center;padding:0;transition:border-color .15s,color .15s}
+.play:hover{border-color:var(--run);color:var(--run)}
+.wk.now{border-color:var(--run)}
+.wk.now .wk-n span{color:var(--run)}
+.wk.full{opacity:.5}
+.wk.full .wk-n span{color:var(--ok)}
+.plan-note{font-family:"IBM Plex Mono",monospace;font-size:.63rem;line-height:1.7;
+  color:var(--mut);padding:6px 2px 0}
+
+@media (max-width:640px){
+  .shell{padding:0 14px calc(56px + env(safe-area-inset-bottom))}
+  .wk{grid-template-columns:30px 1fr;grid-template-areas:"n m" "r r";row-gap:12px;padding:14px}
+  .wk-n{grid-area:n} .wk-mid{grid-area:m} .wk-r{grid-area:r;justify-content:space-between}
+  .cells{gap:8px;flex:1}
+  .cell{width:100%;height:46px;font-size:.76rem}
+  .play{width:46px;height:46px;flex:0 0 46px;margin-left:8px}
+}
+
+/* ============ toast ============ */
+.toast{position:fixed;left:50%;transform:translateX(-50%) translateY(14px);
+  bottom:calc(20px + env(safe-area-inset-bottom));z-index:120;
+  display:flex;align-items:center;gap:14px;max-width:min(440px,calc(100vw - 28px));
+  background:var(--surf);border:1px solid var(--line2);border-radius:13px;
+  padding:12px 13px 12px 16px;box-shadow:var(--lift);
+  font-size:.85rem;font-weight:600;letter-spacing:-.005em;
+  opacity:0;pointer-events:none;transition:opacity .18s,transform .18s}
+.toast.on{opacity:1;transform:translateX(-50%) translateY(0);pointer-events:auto}
+.toast button{border:1px solid var(--line2);background:none;color:var(--ink);border-radius:9px;
+  font-weight:700;font-size:.78rem;padding:9px 13px;min-height:38px;white-space:nowrap}
+.toast button:hover{border-color:var(--run);color:var(--run)}
+
+/* ============ timer ============ */
+.timer{position:fixed;inset:0;z-index:100;display:flex;justify-content:center;
+  background:#151A21;color:#F2F4F7;transition:background .4s ease;
+  padding:max(14px,env(safe-area-inset-top)) 16px max(18px,env(safe-area-inset-bottom))}
+.timer[data-k="run"]{background:#93430F}
+.timer[data-k="walk"],.timer[data-k="warm"],.timer[data-k="cool"]{background:#194557}
+.timer[data-k="idle"]{background:#151A21}
+.timer[data-k="done"]{background:#1C4D38}
+.ti{width:100%;max-width:520px;display:flex;flex-direction:column;gap:14px}
+.t-top{display:flex;justify-content:space-between;align-items:center;gap:12px}
+.t-ctx{font-family:"IBM Plex Mono",monospace;font-size:.68rem;letter-spacing:.14em;
+  text-transform:uppercase;opacity:.75}
+.t-btns{display:flex;gap:7px}
+.t-ghost{background:none;border:1px solid rgba(242,244,247,.3);color:inherit;border-radius:100px;
+  font-family:"IBM Plex Mono",monospace;font-size:.6rem;letter-spacing:.09em;text-transform:uppercase;
+  padding:9px 13px;min-height:38px;transition:border-color .15s,opacity .15s}
+.t-ghost:hover{border-color:rgba(242,244,247,.85)}
+.t-ghost[aria-pressed="false"]{opacity:.45}
+.t-mid{flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;
+  gap:2px;text-align:center;min-height:0}
+.t-ph{font-weight:800;letter-spacing:-.02em;font-size:clamp(1.7rem,8vw,2.6rem);line-height:1;
+  text-transform:uppercase}
+.t-clock{font-family:"IBM Plex Mono",monospace;font-variant-numeric:tabular-nums;font-weight:500;
+  font-size:clamp(4.4rem,26vw,9.4rem);line-height:.98;letter-spacing:-.028em;margin:4px 0}
+.t-rep{font-family:"IBM Plex Mono",monospace;font-size:.82rem;letter-spacing:.07em;opacity:.85}
+.t-next{font-family:"IBM Plex Mono",monospace;font-size:.66rem;letter-spacing:.09em;
+  text-transform:uppercase;opacity:.5;margin-top:9px}
+.t-rail{display:flex;gap:2px;height:10px;width:100%}
+.t-rail span{border-radius:2px;background:rgba(242,244,247,.16);transition:background .25s}
+.t-rail span.r{background:rgba(242,244,247,.34)}
+.t-rail span.past{background:rgba(242,244,247,.7)}
+.t-rail span.cur{background:#F2F4F7}
+.t-meta{display:flex;justify-content:space-between;font-family:"IBM Plex Mono",monospace;
+  font-size:.66rem;letter-spacing:.07em;opacity:.65}
+.t-ctrls{display:flex;gap:9px}
+.t-ctrls button{font-weight:700;font-size:.98rem;border-radius:14px;padding:20px 14px;
+  min-height:62px;border:1px solid transparent;transition:filter .15s,border-color .15s}
+#tmain{flex:1;background:#F2F4F7;color:#151A21}
+#tmain:hover{filter:brightness(.94)}
+#tskip{flex:0 0 30%;background:none;color:inherit;border-color:rgba(242,244,247,.3)}
+#tskip:hover{border-color:rgba(242,244,247,.85)}
+.t-hint{font-family:"IBM Plex Mono",monospace;font-size:.58rem;letter-spacing:.06em;
+  opacity:.45;text-align:center;line-height:1.6;margin:0}
+
+/* ============ why view ============ */
+.why{padding-top:8px}
+.why h2{font-size:1.32rem;font-weight:800;letter-spacing:-.028em;margin:38px 0 14px}
+.why h2:first-child{margin-top:24px}
+.why h3{font-size:.95rem;font-weight:700;letter-spacing:-.01em;margin:0 0 5px}
+.why p,.why li{font-family:"Newsreader",Georgia,serif;font-size:1.02rem;line-height:1.6;color:var(--ink2)}
+.why p{margin:0 0 13px;max-width:64ch}
+.why ul{margin:0 0 13px;padding-left:1.15em;max-width:64ch}
+.why li{margin-bottom:8px}
+.why b{color:var(--ink);font-weight:600}
+.cards{display:grid;grid-template-columns:repeat(auto-fit,minmax(228px,1fr));gap:9px;margin-bottom:14px}
+.card{background:var(--surf);border:1px solid var(--line);border-radius:12px;padding:16px}
+.card p{font-size:.92rem;margin:0;line-height:1.55}
+.card .dose{font-family:"IBM Plex Mono",monospace;font-size:.63rem;color:var(--run);
+  letter-spacing:.05em;display:block;margin:2px 0 7px}
+.sig{display:grid;grid-template-columns:4px 1fr;gap:14px;background:var(--surf);border:1px solid var(--line);
+  border-radius:12px;padding:15px 16px;margin-bottom:8px}
+.sig i{border-radius:100px;display:block}
+.sig p{font-size:.93rem;margin:0;line-height:1.5}
+.road{display:grid;grid-template-columns:96px 1fr;gap:16px;background:var(--surf);border:1px solid var(--line);
+  border-radius:12px;padding:15px 16px;margin-bottom:8px;align-items:baseline}
+.road .when{font-family:"IBM Plex Mono",monospace;font-size:.68rem;color:var(--run);letter-spacing:.05em}
+.road p{font-size:.92rem;margin:0;line-height:1.5}
+@media (max-width:560px){.road{grid-template-columns:1fr;gap:4px}}
+.note{border-left:3px solid var(--run);background:var(--surf);border-radius:0 12px 12px 0;
+  padding:15px 17px;margin-bottom:14px}
+.note p:last-child{margin-bottom:0}
+.srcs a{display:block;font-family:"Newsreader",Georgia,serif;font-size:.9rem;color:var(--ink2);
+  line-height:1.45;margin-bottom:9px;text-decoration-color:var(--line2);text-underline-offset:3px}
+.srcs a:hover{text-decoration-color:var(--run)}
+.foot{font-family:"IBM Plex Mono",monospace;font-size:.62rem;line-height:1.7;color:var(--mut);
+  border-top:1px solid var(--line);margin-top:40px;padding-top:20px}
+@media (prefers-reduced-motion:reduce){*{transition:none!important}}
+</style>
+
+<div class="shell">
+
+  <div class="bar">
+    <span class="brand">Slow Is the Point</span>
+    <div class="tabs" role="tablist">
+      <button role="tab" id="tab-today" aria-selected="true" aria-controls="v-today">Today</button>
+      <button role="tab" id="tab-plan" aria-selected="false" aria-controls="v-plan">Plan</button>
+      <button role="tab" id="tab-why" aria-selected="false" aria-controls="v-why">Why</button>
+    </div>
+  </div>
+
+  <!-- ============ TODAY ============ -->
+  <div id="v-today" role="tabpanel" aria-labelledby="tab-today">
+
+    <div class="resume" id="resume" hidden>
+      <div>
+        <div class="rt" id="resumeT">Session in progress</div>
+        <div class="rs" id="resumeS"></div>
+      </div>
+      <button type="button" id="resumeGo">Resume</button>
+      <button type="button" class="x" id="resumeX" aria-label="Discard the unfinished session">Discard</button>
+    </div>
+
+    <div class="today">
+      <span class="ey"><b></b><span id="heroEy">Week 1, session 1</span></span>
+      <h2 class="today-t" id="heroT">8 × 30 sec run / 90 sec walk</h2>
+      <div class="rib" id="heroRib"></div>
+      <div class="facts" id="heroF"></div>
+      <button class="big" id="start" type="button">
+        <svg viewBox="0 0 24 24" width="18" height="18" aria-hidden="true"><path d="M8 5.5v13l11-6.5z" fill="currentColor"/></svg>
+        <span id="startLabel">Start session</span>
+      </button>
+      <button class="lnk" id="quicklog" type="button">Already ran it — just log it</button>
+    </div>
+
+    <div class="prog">
+      <div class="prog-h"><span><b id="pw">Week 1</b> of 16</span><span id="pdone">0 of 48 sessions</span></div>
+      <div class="track"><i id="trackbar"></i></div>
+      <div class="mini">
+        <span><b id="m1">0</b>sessions done</span>
+        <span><b id="m2">0</b>minutes run</span>
+        <span><b id="m3">—</b>last session</span>
+      </div>
+    </div>
+
+    <div class="first" id="first">
+      <h3>Three things, then stop reading</h3>
+      <ul>
+        <li>Run at a pace where you could say a full sentence out loud. Slower than feels right.</li>
+        <li>Three sessions a week, never two days in a row.</li>
+        <li>Take every walk break, especially on the days you feel great.</li>
+      </ul>
+    </div>
+
+    <button class="save" id="save" data-s="local" type="button"><b></b><span id="saveT">Checking…</span></button>
+    <p class="tip">Progress saves on this phone the instant you tap, and to your Claude account so it survives a new phone or a cleared browser. <b>Add to Home Screen</b> from the Safari share menu to open it like an app.</p>
+  </div>
+
+  <!-- ============ PLAN ============ -->
+  <div id="v-plan" role="tabpanel" aria-labelledby="tab-plan" hidden>
+    <div id="plan"></div>
+    <p class="plan-note">Tap a numbered box to log a session by hand. Tap ▶ to run any week — repeat one if a week felt hard.</p>
+  </div>
+
+  <!-- ============ WHY ============ -->
+  <div id="v-why" role="tabpanel" aria-labelledby="tab-why" class="why" hidden>
+
+    <h2>Why it's built this way</h2>
+    <p>You're strong, 210 lb, and have never trained cardio. Your heart and lungs will adapt within about three weeks. Your Achilles tendons, shins and plantar fascia take six to twelve months. Everything in this plan sits inside that gap, because that gap is what ends most beginner running.</p>
+    <div class="cards">
+      <div class="card"><h3>Volume injures beginners, not effort</h3><p>In a randomized trial of novice runners in your BMI range, starting at 3 km a week gave a 6.9% injury rate over four weeks. Starting at 6 km gave 18.5%. Nearly triple, for one extra kilometre per session.</p></div>
+      <div class="card"><h3>Walk breaks are the training</h3><p>Not a scaffold to abandon early. They're what lets you accumulate running minutes at a load your body can repair before the next session. Take them on the days you feel great — especially then.</p></div>
+      <div class="card"><h3>Full sentences, always</h3><p>You should be able to say your address out loud while running. If you can't, slow down. Effort sits at 4 or 5 out of 10 every single time. This is the biggest lever and the easiest to get wrong.</p></div>
+      <div class="card"><h3>Minutes, never distance</h3><p>Chasing a distance makes you push pace to finish sooner. Standard Couch-to-5K jumps from 5 to 20 minutes of running in week 5 — that jump is where most people quit or get hurt. There's no jump like it here.</p></div>
+    </div>
+
+    <h2>What to add to your lifting</h2>
+    <p>Keep training as you are — squats and deadlifts are doing you favors. Add these twice a week. They cover the tissue running loads and lifting doesn't.</p>
+    <div class="cards">
+      <div class="card"><h3>Calf raises, straight-leg</h3><span class="dose">3 × 15 → single leg → weighted</span><p>The Achilles takes the most load per stride and is the most common early casualty. Slow, full range, three-second lower.</p></div>
+      <div class="card"><h3>Calf raises, bent-knee</h3><span class="dose">3 × 15, knee bent ~30°</span><p>Hits the soleus, which carries most of the load at running pace and is routinely undertrained by lifters.</p></div>
+      <div class="card"><h3>Tibialis raises</h3><span class="dose">3 × 20, back to a wall</span><p>Toes up against resistance. The best insurance against shin splints, the injury most likely to interrupt weeks 4–10.</p></div>
+      <div class="card"><h3>Single-leg RDL</h3><span class="dose">3 × 8 per side, light</span><p>Running is a series of single-leg landings. Teaches your hip to control one, which bilateral lifts never asked for.</p></div>
+      <div class="card"><h3>Step-downs</h3><span class="dose">3 × 10 per side, 6–12" box</span><p>Slow eccentric control at the knee. Protective against the runner's-knee pattern that appears as volume climbs.</p></div>
+      <div class="card"><h3>Side plank &amp; dead bug</h3><span class="dose">3 × 30–45s each</span><p>Trunk stability under fatigue. Form breaking down at minute 25 is what turns a long run into an injury.</p></div>
+    </div>
+    <div class="note"><p><b>Don't lift legs heavy the day before a run.</b> Sore calves change how you land, and changed landing is how beginners get hurt. If the schedule forces overlap, lift legs on the same day as a run rather than the day before.</p></div>
+
+    <h2>Reading your body</h2>
+    <div class="sig"><i style="background:var(--walk)"></i><div><h3>Keep going</h3><p>Soreness spread across a whole muscle group. Aching that shows up during a run and fades within it. Morning stiffness that loosens in ten minutes. This is adaptation and it's supposed to happen.</p></div></div>
+    <div class="sig"><i style="background:var(--run)"></i><div><h3>Repeat the week, don't advance</h3><p>Discomfort still there the next morning. Anything that changes how you land, even slightly. Finishing wrecked rather than like you had more in you. Repeating a week costs seven days; an injury costs eight weeks.</p></div></div>
+    <div class="sig"><i style="background:#D9484E"></i><div><h3>Stop and get it looked at</h3><p>Sharp or stabbing pain. Pain you can cover with one fingertip, especially over bone along the shin or top of the foot. Anything that makes you limp. Pain that worsens as the run goes on. Swelling. A bone stress injury caught early is weeks, not months.</p></div></div>
+
+    <h2>Practical</h2>
+    <ul>
+      <li><b>Shoes, properly fitted.</b> A neutral cushioned trainer from an actual running store — they usually run a half to full size larger than street shoes. At your weight this is the one piece of gear worth money. Replace at 300–500 miles.</li>
+      <li><b>Treadmill first, outdoors later.</b> A treadmill takes pace out of your hands, which is your main risk. Walk at 3.0–3.5 mph, jog at 4.2–4.8, incline 1%. From week 6, move one run a week outside; by week 16, most of them.</li>
+      <li><b>Cadence.</b> Shorter, quicker steps — around 170–180 a minute — land more gently. Don't obsess; just notice if you're reaching out with a long stride.</li>
+      <li><b>Form: don't overthink it.</b> Look 20 feet ahead, loose shoulders, short quick steps, arms swinging. That's the list. Do not try to change your footstrike.</li>
+      <li><b>Weight.</b> Every pound off is less force at each of thousands of footstrikes. Worth doing gradually — but don't cut calories hard while adding new training load.</li>
+      <li><b>If you miss a week,</b> repeat the last week you finished. Miss two or more, drop back two weeks.</li>
+      <li><b>One new variable at a time.</b> Not a fourth run day, new shoes and hills in the same week — when something hurts you won't know which caused it.</li>
+    </ul>
+    <div class="note"><p><b>On the doctor question.</b> Starting from where you are is normal and safe. But with a family history of early heart disease, or any chest pressure, unusual breathlessness, dizziness or palpitations during a session — stop and get it checked rather than pushing through.</p></div>
+
+    <h2>The honest road to a marathon</h2>
+    <div class="road"><span class="when">Months 1–4</span><div><h3>This plan</h3><p>Run/walk to a continuous 30 minutes. The goal isn't fitness — it's teaching your legs to absorb impact and building the habit of three sessions a week.</p></div></div>
+    <div class="road"><span class="when">Months 5–8</span><div><h3>Base building</h3><p>Four runs a week. One long run creeping from 40 minutes toward 75. Roughly 20–25 miles a week, almost all easy. Race a 10K for fun.</p></div></div>
+    <div class="road"><span class="when">Months 9–13</span><div><h3>Half marathon</h3><p>A 12–14 week block off that base. The first distance where a marathon feels real rather than theoretical — and a great race to run together.</p></div></div>
+    <div class="road"><span class="when">Months 14–20</span><div><h3>Marathon block</h3><p>16–20 weeks, peaking around 35–45 miles a week with a 20-mile long run. Pick the race six months out so the block has a date attached.</p></div></div>
+    <div class="note">
+      <p><b>Realistically 18 to 24 months from today.</b> Novice injury rates run far above experienced ones, and the strongest predictor of finishing a marathon is an uninterrupted year of running beforehand. You could compress it to about 14 months if everything went perfectly; most people who try lose more time to injury than they saved.</p>
+      <p>The nearer prize: within about six months you can join her easy runs. Her easy pace and your hard pace overlap long before your race paces do, and easy running is most of what marathon training actually is.</p>
+    </div>
+
+    <h2>Sources</h2>
+    <div class="srcs">
+      <a href="https://pmc.ncbi.nlm.nih.gov/articles/PMC6253747/">The Start-to-Run Distance and Running-Related Injury Among Obese Novice Runners: A Randomized Trial</a>
+      <a href="https://doi.org/10.3390/ijerph20176682">"Couch-to-5k or Couch to Ouch to Couch!?" Is Non-Completion Linked to Musculoskeletal Injury?</a>
+      <a href="https://www.tandfonline.com/doi/full/10.1080/00913847.2018.1507410">Differences in injury risk between novice and experienced runners over a 4-year period</a>
+      <a href="https://pmr.med.ufl.edu/wordpress/files/2022/09/Running-for-weight-loss-considerations-and-safety.pdf">Clinical Review: Focused Considerations for Initiating and Progressing Running</a>
+      <a href="https://www.nonetorun.com/blog/couch-to-5k-running-plan-alternative">Couch to 5K Alternative: A Better Plan for True Beginners</a>
+      <a href="https://marathonhandbook.com/polarized-training/">Polarized Training for Runners: The 80/20 Method</a>
+    </div>
+
+    <p class="foot">Built for one specific runner. Not medical advice — a training structure drawn from the research above, assuming you'll stop and ask a professional if something hurts in the ways described.</p>
+  </div>
+</div>
+
+<div class="toast" id="toast" role="status" aria-live="polite">
+  <span id="toastT"></span>
+  <button type="button" id="toastU">Undo</button>
+</div>
+
+<div class="timer" id="timer" data-k="idle" hidden role="dialog" aria-modal="true" aria-label="Session timer">
+  <div class="ti">
+    <div class="t-top">
+      <span class="t-ctx" id="tctx">Week 1 · Session 1</span>
+      <span class="t-btns">
+        <button type="button" class="t-ghost" id="tvoice" aria-pressed="true">Voice</button>
+        <button type="button" class="t-ghost" id="tclose">Close</button>
+      </span>
+    </div>
+    <div class="t-mid">
+      <span class="t-ph" id="tph" aria-live="polite">Ready</span>
+      <span class="t-clock" id="tclock">0:00</span>
+      <span class="t-rep" id="trep"></span>
+      <span class="t-next" id="tnext"></span>
+    </div>
+    <div class="t-rail" id="trail" aria-hidden="true"></div>
+    <div class="t-meta"><span id="tleft">—</span><span id="tseg">—</span></div>
+    <div class="t-ctrls">
+      <button type="button" id="tmain">Start</button>
+      <button type="button" id="tskip">Skip</button>
+    </div>
+    <p class="t-hint" id="thint">Keep this on screen — phone browsers mute background tabs.</p>
+  </div>
+</div>
+
+<script type="application/json" id="saved">{"v":4,"updated":1787965892092,"done":{"w1s1":true}}</script>
+<script type="application/json" id="wkdata">[{"w": 1, "label": "8 × 30 sec run / 90 sec walk", "sess": 4, "clock": 26, "phase": "Teach the legs to land", "segs": [[30, 90], [30, 90], [30, 90], [30, 90], [30, 90], [30, 90], [30, 90], [30, 90]]}, {"w": 2, "label": "8 × 45 sec run / 90 sec walk", "sess": 6, "clock": 28, "phase": "Teach the legs to land", "segs": [[45, 90], [45, 90], [45, 90], [45, 90], [45, 90], [45, 90], [45, 90], [45, 90]]}, {"w": 3, "label": "8 × 1 min run / 90 sec walk", "sess": 8, "clock": 30, "phase": "Teach the legs to land", "segs": [[60, 90], [60, 90], [60, 90], [60, 90], [60, 90], [60, 90], [60, 90], [60, 90]]}, {"w": 4, "label": "6 × 1 min run / 90 sec walk", "sess": 6, "clock": 25, "phase": "Teach the legs to land", "easy": true, "segs": [[60, 90], [60, 90], [60, 90], [60, 90], [60, 90], [60, 90]]}, {"w": 5, "label": "6 × 90 sec run / 90 sec walk", "sess": 9, "clock": 28, "phase": "Stretch the intervals", "segs": [[90, 90], [90, 90], [90, 90], [90, 90], [90, 90], [90, 90]]}, {"w": 6, "label": "6 × 2 min run / 90 sec walk", "sess": 12, "clock": 31, "phase": "Stretch the intervals", "segs": [[120, 90], [120, 90], [120, 90], [120, 90], [120, 90], [120, 90]]}, {"w": 7, "label": "5 × 3 min run / 90 sec walk", "sess": 15, "clock": 33, "phase": "Stretch the intervals", "segs": [[180, 90], [180, 90], [180, 90], [180, 90], [180, 90]]}, {"w": 8, "label": "5 × 2 min run / 90 sec walk", "sess": 10, "clock": 28, "phase": "Stretch the intervals", "easy": true, "segs": [[120, 90], [120, 90], [120, 90], [120, 90], [120, 90]]}, {"w": 9, "label": "5 × 4 min run / 90 sec walk", "sess": 20, "clock": 38, "phase": "Toward continuous", "segs": [[240, 90], [240, 90], [240, 90], [240, 90], [240, 90]]}, {"w": 10, "label": "4 × 5 min run / 2 min walk", "sess": 20, "clock": 38, "phase": "Toward continuous", "segs": [[300, 120], [300, 120], [300, 120], [300, 120]]}, {"w": 11, "label": "3 × 8 min run / 2 min walk", "sess": 24, "clock": 40, "phase": "Toward continuous", "segs": [[480, 120], [480, 120], [480, 120]]}, {"w": 12, "label": "4 × 5 min run / 90 sec walk", "sess": 20, "clock": 36, "phase": "Toward continuous", "easy": true, "segs": [[300, 90], [300, 90], [300, 90], [300, 90]]}, {"w": 13, "label": "2 × 12 min run / 2 min walk", "sess": 24, "clock": 38, "phase": "The first 5K", "segs": [[720, 120], [720, 120]]}, {"w": 14, "label": "2 × 15 min run / 2 min walk", "sess": 30, "clock": 44, "phase": "The first 5K", "segs": [[900, 120], [900, 120]]}, {"w": 15, "label": "20 min · walk · 8 min", "sess": 28, "clock": 40, "phase": "The first 5K", "segs": [[1200, 120], [480, 0]]}, {"w": 16, "label": "30 min without stopping", "sess": 30, "clock": 40, "phase": "The first 5K", "tag": "5K", "segs": [[1800, 0]]}]</script>
+<script>
+(function(){
+"use strict";
+
+var META = JSON.parse(document.getElementById("wkdata").textContent);
+var KEY="sitp-v4", OLD3="sitp-v3", OLD2="sitp-v2", RESUMEKEY="sitp-run", TOTAL=META.length*3;
+var state={v:4,updated:0,done:{}};
+var $=function(id){ return document.getElementById(id); };
+var plan=$("plan");
+
+/* ================= persistence =================
+   Three layers, in order of how fast they answer:
+   1. localStorage — instant, offline, survives closing the tab.
+   2. sessionStorage — a backstop when Safari refuses localStorage (private tabs).
+   3. the artifact's own data/progress.json — follows you to any device or a new phone.
+   Every layer is written on every change; the cloud write is debounced and
+   flushed when the page is backgrounded, because iOS suspends tabs without warning. */
+
+var api=null, saving=false, pending=false, lastCode="", saveTimer=null, remoteOk=false;
+var saveEl=$("save"), saveT=$("saveT");
+
+function parse(t){ try{ var o=JSON.parse(t); return (o&&o.done)?o:null; }catch(e){ return null; } }
+function fromStore(st,k){ try{ return st?parse(st.getItem(k)):null; }catch(e){ return null; } }
+function readLocal(){
+  return fromStore(window.localStorage,KEY) || fromStore(window.sessionStorage,KEY)
+      || fromStore(window.localStorage,OLD3) || fromStore(window.localStorage,OLD2);
+}
+function writeLocal(){
+  var j=JSON.stringify(state);
+  try{ localStorage.setItem(KEY,j); }catch(e){}
+  try{ sessionStorage.setItem(KEY,j); }catch(e){}
+}
+function readBaked(){ var el=$("saved"); return el?parse(el.textContent):null; }
+function adopt(o){ return {v:4, updated:(o&&o.updated)||0, done:(o&&o.done)||{}}; }
+function newest(){
+  var best=state, list=[readBaked(),readLocal()];
+  for(var i=0;i<list.length;i++){ var c=list[i]; if(c&&(c.updated||0)>(best.updated||0)) best=c; }
+  return adopt(best);
+}
+
+var SAVE_COPY={
+  cloud:"Saved on this phone and to your account",
+  saving:"Saving…",
+  retry:"Connection dropped — retrying",
+  local:"Saved on this phone only — tap to retry",
+  ready:"Saved on this phone"
+};
+function setSave(s){
+  saveEl.setAttribute("data-s",s);
+  saveT.textContent=SAVE_COPY[s]||SAVE_COPY.ready;
+}
+function persist(){
+  state.updated=Date.now();
+  writeLocal();
+  if(!api){ setSave("local"); return; }
+  setSave("saving");
+  if(saveTimer) clearTimeout(saveTimer);
+  saveTimer=setTimeout(flush,900);
+}
+function flush(){
+  if(saveTimer){ clearTimeout(saveTimer); saveTimer=null; }
+  if(!api) return;
+  if(saving){ pending=true; return; }
+  doSave();
+}
+function after(ok,code){
+  saving=false;
+  if(ok){ lastCode=""; setSave("cloud"); } else { lastCode=code; setSave("local"); }
+  if(pending&&ok){ pending=false; doSave(); }
+}
+function doSave(){
+  saving=true; pending=false; setSave("saving");
+  api.publish({"data/progress.json":JSON.stringify(state)}).then(function(){ after(true); },function(err){
+    var code=(err&&err.code)||"upstream_error";
+    if(code==="conflict"){ after(true); return; }
+    if(code==="rate_limited"||code==="upstream_error"){
+      saving=false; setSave("retry");
+      setTimeout(doSave, 7000+Math.floor(Math.random()*5000)); return;
+    }
+    /* The data-file path isn't available to this view. Fall back to rewriting the
+       page with progress baked in — but never mid-run, because that reloads the view. */
+    if($("timer").hidden) bakeIntoPage(code); else after(false,code);
+  });
+}
+function bakeIntoPage(prev){
+  var payload=JSON.stringify(state);
+  fetch(location.href,{cache:"no-store"}).then(function(r){ if(!r.ok) throw 0; return r.text(); })
+  .then(function(src){
+    var re=/(<script type="application\/json" id="saved">)[\s\S]*?(<\/script>)/;
+    if(!re.test(src)||src.slice(0,200).toLowerCase().indexOf("<!doctype")===-1) throw 0;
+    return api.publish(src.replace(re,"$1"+payload.replace(/\$/g,"$$$$")+"$2"));
+  }).then(function(){ after(true); })
+  .catch(function(err){
+    var code=(err&&err.code)||prev||"no_save_path";
+    if(code==="conflict"){ after(true); return; }
+    api=null; after(false,code);
+  });
+}
+saveEl.addEventListener("click",function(){
+  if(api){ flush(); return; }
+  setSave("saving");
+  boot(true);
+});
+
+/* ================= remembering an unfinished run ================= */
+function stashRun(o){ try{ o?localStorage.setItem(RESUMEKEY,JSON.stringify(o)):localStorage.removeItem(RESUMEKEY); }catch(e){} }
+function readRun(){
+  try{
+    var o=JSON.parse(localStorage.getItem(RESUMEKEY)||"null");
+    if(!o||typeof o.w!=="number") return null;
+    if(Date.now()-(o.at||0) > 6*3600*1000){ stashRun(null); return null; }
+    return o;
+  }catch(e){ return null; }
+}
+
+/* ================= plan rendering ================= */
+function metaFor(w){ for(var i=0;i<META.length;i++){ if(META[i].w===w) return META[i]; } return null; }
+function ribbonHTML(m){
+  var h="";
+  for(var i=0;i<m.segs.length;i++){
+    h+='<i class="r" style="flex:'+m.segs[i][0]+'"></i>';
+    if(m.segs[i][1]) h+='<i class="k" style="flex:'+m.segs[i][1]+'"></i>';
+  }
+  return h;
+}
+function pad(n){ return (n<10?"0":"")+n; }
+function buildPlan(){
+  var h="", phase="";
+  for(var i=0;i<META.length;i++){
+    var m=META[i];
+    if(m.phase!==phase){
+      phase=m.phase;
+      var from=m.w, to=Math.min(from+3,META.length);
+      h+='<div class="band"><span class="band-n">Weeks '+from+'–'+to+'</span><span class="band-t">'+phase+'</span></div>';
+    }
+    var tag = m.tag ? '<span class="tagx">'+m.tag+'</span>' : (m.easy?'<span class="tagx">easy week</span>':"");
+    h+='<div class="wk" id="week'+m.w+'">'
+      +  '<div class="wk-n"><span>'+pad(m.w)+'</span></div>'
+      +  '<div class="wk-mid">'
+      +    '<div class="wk-t">'+m.label+tag+'</div>'
+      +    '<div class="wk-s">'+m.sess+' min running &middot; '+m.clock+' min total</div>'
+      +    '<div class="rib">'+ribbonHTML(m)+'</div>'
+      +  '</div>'
+      +  '<div class="wk-r"><div class="cells">';
+    for(var s=1;s<=3;s++){
+      h+='<button type="button" class="cell" data-id="w'+m.w+'s'+s+'" aria-pressed="false" '
+        +'aria-label="Week '+m.w+', session '+s+'">'+s+'</button>';
+    }
+    h+='</div><button type="button" class="play" data-go="'+m.w+'" aria-label="Run a week '+m.w+' session">'
+      +'<svg viewBox="0 0 24 24" width="15" height="15" aria-hidden="true"><path d="M8 5.5v13l11-6.5z" fill="currentColor"/></svg>'
+      +'</button></div></div>';
+  }
+  plan.innerHTML=h;
+}
+
+/* ================= state → screen ================= */
+function stampOf(v){ return (typeof v==="number")?v:0; }
+function whenText(ts){
+  if(!ts) return "—";
+  var d=new Date(ts), now=new Date();
+  var day=Math.round((new Date(now.getFullYear(),now.getMonth(),now.getDate())
+        - new Date(d.getFullYear(),d.getMonth(),d.getDate()))/86400000);
+  if(day<=0) return "today";
+  if(day===1) return "yesterday";
+  if(day<7) return day+" days ago";
+  return d.toLocaleDateString(undefined,{month:"short",day:"numeric"});
+}
+function nextUp(){
+  for(var i=0;i<META.length;i++){
+    var m=META[i], left=0;
+    for(var s=1;s<=3;s++){ if(!state.done["w"+m.w+"s"+s]) left++; }
+    if(left>0) return {m:m, no:4-left};
+  }
+  return null;
+}
+function paint(){
+  var cells=plan.querySelectorAll(".cell"), n=0, mins=0, last=0;
+  for(var i=0;i<cells.length;i++){
+    var v=state.done[cells[i].getAttribute("data-id")];
+    cells[i].setAttribute("aria-pressed", v?"true":"false");
+  }
+  for(var j=0;j<META.length;j++){
+    var m=META[j], left=0;
+    for(var s=1;s<=3;s++){
+      var val=state.done["w"+m.w+"s"+s];
+      if(val){ n++; mins+=m.sess; last=Math.max(last,stampOf(val)); } else left++;
+    }
+    var row=$("week"+m.w);
+    if(row){ row.classList.toggle("full", left===0); row.classList.remove("now"); }
+  }
+
+  $("m1").textContent=n;
+  $("m2").textContent=mins;
+  $("m3").textContent=whenText(last);
+  $("pdone").textContent=n+" of "+TOTAL+" sessions";
+  $("trackbar").style.width=(n/TOTAL*100)+"%";
+  $("first").hidden = n>0;
+
+  var up=nextUp();
+  if(!up){
+    $("pw").textContent="Done";
+    $("heroEy").textContent="All 48 sessions complete";
+    $("heroT").textContent="You can run 5K without stopping.";
+    $("heroRib").innerHTML=ribbonHTML(META[META.length-1]);
+    $("heroF").innerHTML="<span><b>16</b> weeks</span><span><b>48</b> sessions</span>";
+    $("startLabel").textContent="Run week 16 again";
+    $("quicklog").hidden=true;
+  }else{
+    var m2=up.m;
+    $("pw").textContent="Week "+m2.w;
+    $("heroEy").textContent="Week "+m2.w+", session "+up.no+" of 3";
+    $("heroT").textContent=m2.label;
+    $("heroRib").innerHTML=ribbonHTML(m2);
+    $("heroF").innerHTML="<span><b>"+m2.clock+"</b> min total</span>"
+      +"<span><b>"+m2.sess+"</b> min running</span>"
+      +"<span>walk breaks included</span>";
+    $("startLabel").textContent="Start session";
+    $("quicklog").hidden=false;
+    var row2=$("week"+m2.w); if(row2) row2.classList.add("now");
+  }
+}
+
+/* ================= toast with undo ================= */
+var toastTimer=null, undoFn=null;
+function toast(msg,undo){
+  $("toastT").textContent=msg;
+  undoFn=undo||null;
+  $("toastU").hidden=!undoFn;
+  $("toast").classList.add("on");
+  if(toastTimer) clearTimeout(toastTimer);
+  toastTimer=setTimeout(function(){ $("toast").classList.remove("on"); undoFn=null; },5000);
+}
+$("toastU").addEventListener("click",function(){
+  if(undoFn) undoFn();
+  undoFn=null; $("toast").classList.remove("on");
+});
+
+function logSession(id,label){
+  var r=readRun();
+  if(r && "w"+r.w+"s"+r.no===id){ stashRun(null); showResume(); }
+  state.done[id]=Date.now();
+  paint(); persist();
+  toast(label+" logged", function(){
+    delete state.done[id]; paint(); persist();
+  });
+}
+
+/* ================= tabs ================= */
+var TABS=[["tab-today","v-today"],["tab-plan","v-plan"],["tab-why","v-why"]];
+function show(which){
+  for(var i=0;i<TABS.length;i++){
+    var on=TABS[i][1]==="v-"+which;
+    $(TABS[i][1]).hidden=!on;
+    $(TABS[i][0]).setAttribute("aria-selected",on?"true":"false");
+  }
+  window.scrollTo(0,0);
+  if(which==="plan"){
+    var up=nextUp(), row=up&&$("week"+up.m.w);
+    if(row) row.scrollIntoView({block:"center",behavior:"instant"});
+  }
+}
+$("tab-today").addEventListener("click",function(){ show("today"); });
+$("tab-plan").addEventListener("click",function(){ show("plan"); });
+$("tab-why").addEventListener("click",function(){ show("why"); });
+
+/* ================= session timer ================= */
+var T={el:$("timer"),ctx:$("tctx"),ph:$("tph"),clock:$("tclock"),rep:$("trep"),next:$("tnext"),
+       rail:$("trail"),left:$("tleft"),seg:$("tseg"),main:$("tmain"),skip:$("tskip"),voice:$("tvoice")};
+var segs=[],wkMeta=null,sessId=null,sessNo=1,total=0;
+var startedAt=0,offset=0,running=false,ticker=null,lastIdx=-1,finished=false,cdAt=-1;
+var ac=null,wake=null,media=null;
+var voiceOn=true;
+try{ voiceOn = localStorage.getItem("sitp-voice")!=="0"; }catch(e){}
+T.voice.setAttribute("aria-pressed",voiceOn?"true":"false");
+
+function buildSegs(m){
+  var out=[{k:"warm",sec:300,label:"Warm up",sub:"Brisk walk",say:"Warm up. Brisk walk."}];
+  var p=m.segs, runs=p.length, n=0;
+  for(var i=0;i<p.length;i++){
+    n++;
+    var last=(n===runs);
+    out.push({k:"run",sec:p[i][0],label:"Run",
+      sub: runs===1 ? "One continuous block" : ("Rep "+n+" of "+runs),
+      say: last&&runs>1 ? "Run. Last one." : "Run."});
+    var w=p[i][1];
+    if(w>0){
+      if(i===p.length-1){ out.push({k:"cool",sec:w+300,label:"Cool down",sub:"Easy walk. You're done.",say:"Cool down. Nice work."}); return out; }
+      out.push({k:"walk",sec:w,label:"Walk",sub:"Recover",say:"Walk."});
+    }
+  }
+  out.push({k:"cool",sec:300,label:"Cool down",sub:"Easy walk. You're done.",say:"Cool down. Nice work."});
+  return out;
+}
+function audio(){
+  if(ac) return ac;
+  try{
+    var C=window.AudioContext||window.webkitAudioContext; if(!C) return null;
+    ac=new C();
+    var o=ac.createOscillator(),g=ac.createGain();
+    g.gain.value=0.0006; o.frequency.value=55; o.connect(g); g.connect(ac.destination); o.start();
+  }catch(e){ ac=null; }
+  return ac;
+}
+function beep(f,d,at){
+  var a=audio(); if(!a) return;
+  try{
+    if(a.state==="suspended") a.resume();
+    var t=a.currentTime+(at||0),o=a.createOscillator(),g=a.createGain();
+    o.type="sine"; o.frequency.value=f;
+    g.gain.setValueAtTime(0.0001,t); g.gain.linearRampToValueAtTime(0.3,t+0.012);
+    g.gain.exponentialRampToValueAtTime(0.0008,t+d);
+    o.connect(g); g.connect(a.destination); o.start(t); o.stop(t+d+0.04);
+  }catch(e){}
+}
+function buzz(p){ try{ if(navigator.vibrate) navigator.vibrate(p); }catch(e){} }
+function say(txt){
+  if(!voiceOn||!txt) return;
+  try{
+    if(!window.speechSynthesis||!window.SpeechSynthesisUtterance) return;
+    var u=new SpeechSynthesisUtterance(txt); u.rate=1.05; u.volume=1;
+    speechSynthesis.cancel(); speechSynthesis.speak(u);
+  }catch(e){}
+}
+function cue(k,txt){
+  if(k==="run"){ beep(920,.15,0); beep(920,.15,.2); buzz([130,90,130]); }
+  else if(k==="done"){ beep(660,.19,0); beep(830,.19,.23); beep(990,.4,.46); buzz([200,110,200,110,320]); }
+  else { beep(430,.32,0); buzz([240]); }
+  setTimeout(function(){ say(txt); }, 430);
+}
+function silentSrc(sec){
+  var sr=8000,n=sr*sec,b=new ArrayBuffer(44+n*2),v=new DataView(b);
+  function w(o,t){ for(var i=0;i<t.length;i++) v.setUint8(o+i,t.charCodeAt(i)); }
+  w(0,"RIFF"); v.setUint32(4,36+n*2,true); w(8,"WAVE"); w(12,"fmt ");
+  v.setUint32(16,16,true); v.setUint16(20,1,true); v.setUint16(22,1,true);
+  v.setUint32(24,sr,true); v.setUint32(28,sr*2,true); v.setUint16(32,2,true);
+  v.setUint16(34,16,true); w(36,"data"); v.setUint32(40,n*2,true);
+  return URL.createObjectURL(new Blob([b],{type:"audio/wav"}));
+}
+function holdOpen(){
+  try{
+    if(!media){
+      media=new Audio(silentSrc(2)); media.loop=true; media.preload="auto";
+      media.setAttribute("playsinline",""); media.volume=1;
+    }
+    var p=media.play(); if(p&&p.catch) p.catch(function(){});
+  }catch(e){}
+}
+function letGo(){ try{ if(media) media.pause(); }catch(e){} }
+function nowPlaying(a,b){
+  try{
+    if(!navigator.mediaSession) return;
+    if(window.MediaMetadata) navigator.mediaSession.metadata=new MediaMetadata({title:a,artist:b,album:"Slow Is the Point"});
+    navigator.mediaSession.playbackState=running?"playing":"paused";
+    navigator.mediaSession.setActionHandler("play",function(){ if(!running) play(); });
+    navigator.mediaSession.setActionHandler("pause",function(){ if(running) pause(); });
+    navigator.mediaSession.setActionHandler("nexttrack",function(){ skipSeg(); });
+  }catch(e){}
+}
+function lock(){
+  try{
+    if(navigator.wakeLock&&navigator.wakeLock.request)
+      navigator.wakeLock.request("screen").then(function(w){ wake=w; },function(){});
+  }catch(e){}
+}
+function unlock(){ try{ if(wake&&wake.release){ wake.release(); wake=null; } }catch(e){} }
+
+function fmt(x){ x=Math.max(0,Math.ceil(x)); var m=Math.floor(x/60),q=x%60; return m+":"+(q<10?"0":"")+q; }
+function elapsed(){ return running?offset+(Date.now()-startedAt)/1000:offset; }
+function locate(e){ var a=0; for(var i=0;i<segs.length;i++){ a+=segs[i].sec; if(e<a) return {i:i,rem:a-e}; } return {i:segs.length,rem:0}; }
+function buildRail(){ var h=""; for(var i=0;i<segs.length;i++) h+='<span style="flex:'+segs[i].sec+'"></span>'; T.rail.innerHTML=h; }
+function paintRail(c){
+  var k=T.rail.children;
+  for(var i=0;i<k.length;i++) k[i].className = i<c?"past":(i===c?"cur":(segs[i].k==="run"?"r":""));
+}
+var lastKeep=0;
+function keepRun(force){
+  /* Only an open timer owns the unfinished-run record — otherwise a pagehide
+     fired long after the run was closed or logged would write it back. */
+  if(!wkMeta||finished||T.el.hidden) return;
+  var now=Date.now();
+  if(!force && now-lastKeep < 1000) return;
+  lastKeep=now;
+  stashRun({w:wkMeta.w, no:sessNo, at:now, sec:elapsed()});
+}
+
+function render(){
+  var e=elapsed(),at=locate(e);
+  if(at.i>=segs.length){ finish(); return; }
+  if(at.i!==lastIdx){
+    var sg=segs[at.i];
+    T.el.setAttribute("data-k",sg.k);
+    T.ph.textContent=sg.label; T.rep.textContent=sg.sub;
+    var nx=segs[at.i+1];
+    T.next.textContent = nx ? ("then " + nx.label.toLowerCase() + " · " + fmt(nx.sec)) : "then you're done";
+    if(running) cue(sg.k==="run"?"run":"walk", sg.say);
+    nowPlaying(sg.label.toUpperCase(), "Week "+wkMeta.w+" · "+sg.sub);
+    lastIdx=at.i; cdAt=-1; paintRail(at.i);
+  }
+  T.clock.textContent=fmt(at.rem);
+  var r=Math.ceil(at.rem);
+  if(running&&r<=3&&r>=1&&r!==cdAt){ cdAt=r; beep(700,.07,0); }
+  T.left.textContent=fmt(total-e)+" left in session";
+  T.seg.textContent=(at.i+1)+" / "+segs.length;
+  keepRun();
+}
+function play(){
+  if(finished) return;
+  audio(); holdOpen();
+  offset=elapsed(); startedAt=Date.now(); running=true;
+  T.main.textContent="Pause"; T.skip.hidden=false; lock();
+  if(!ticker) ticker=setInterval(render,200);
+  render();
+}
+function pause(){
+  if(!running) return;
+  offset=elapsed(); running=false; startedAt=0;
+  T.main.textContent="Resume"; unlock(); letGo(); keepRun(true);
+  try{ if(navigator.mediaSession) navigator.mediaSession.playbackState="paused"; }catch(e){}
+  render();
+}
+function skipSeg(){
+  var at=locate(elapsed()); if(at.i>=segs.length) return;
+  var a=0; for(var i=0;i<=at.i;i++) a+=segs[i].sec;
+  offset=a; startedAt=Date.now(); render(); keepRun(true);
+}
+function finish(){
+  if(finished) return;
+  finished=true; running=false; offset=total;
+  if(ticker){ clearInterval(ticker); ticker=null; }
+  unlock(); stashRun(null);
+  cue("done","Session complete. Nice work.");
+  nowPlaying("SESSION COMPLETE","Week "+wkMeta.w);
+  setTimeout(letGo,4500);
+  T.el.setAttribute("data-k","done");
+  T.ph.textContent="Complete"; T.clock.textContent="0:00";
+  T.rep.textContent="Week "+wkMeta.w+" · "+wkMeta.label; T.next.textContent="";
+  T.left.textContent=fmt(total)+" done"; T.seg.textContent="";
+  T.main.textContent="Save it"; T.skip.hidden=true; paintRail(segs.length);
+}
+function closeTimer(){
+  if(ticker){ clearInterval(ticker); ticker=null; }
+  running=false; keepRun(true); unlock(); letGo();
+  try{ if(window.speechSynthesis) speechSynthesis.cancel(); }catch(e){}
+  T.el.hidden=true; document.body.style.overflow="";
+  if(readRun()) show("today");
+  showResume();
+}
+function nextSession(w){ for(var s=1;s<=3;s++){ if(!state.done["w"+w+"s"+s]) return s; } return 3; }
+function openTimer(w,resumeSec,resumeNo){
+  var m=metaFor(w); if(!m) return;
+  var no=resumeNo||nextSession(w);
+  wkMeta=m; sessNo=no; sessId="w"+w+"s"+no; segs=buildSegs(m);
+  total=0; for(var j=0;j<segs.length;j++) total+=segs[j].sec;
+  startedAt=0; offset=Math.min(resumeSec||0, total-1); running=false;
+  lastIdx=-1; finished=false; cdAt=-1;
+  buildRail(); paintRail(-1);
+  T.ctx.textContent="Week "+w+" · Session "+no;
+  T.el.setAttribute("data-k","idle");
+  T.el.hidden=false; document.body.style.overflow="hidden";
+  $("resume").hidden=true;
+  if(offset>0){
+    T.main.textContent="Resume"; T.skip.hidden=false;
+    render();
+    T.el.setAttribute("data-k","idle");
+    T.ph.textContent="Paused";
+    lastIdx=-1;
+  }else{
+    T.ph.textContent="Ready"; T.clock.textContent=fmt(total);
+    T.rep.textContent=m.label; T.next.textContent="starts with a 5 min warm-up walk";
+    T.left.textContent=fmt(total)+" total"; T.seg.textContent=segs.length+" segments";
+    T.main.textContent="Start"; T.skip.hidden=true;
+  }
+}
+
+T.main.addEventListener("click",function(){
+  if(finished){
+    var id=sessId, w=wkMeta.w, no=sessNo;
+    closeTimer();
+    logSession(id,"Week "+w+", session "+no);
+    return;
+  }
+  if(running) pause(); else play();
+});
+T.skip.addEventListener("click",skipSeg);
+$("tclose").addEventListener("click",closeTimer);
+T.voice.addEventListener("click",function(){
+  voiceOn=!voiceOn; T.voice.setAttribute("aria-pressed",voiceOn?"true":"false");
+  try{ localStorage.setItem("sitp-voice",voiceOn?"1":"0"); }catch(e){}
+  if(voiceOn) say("Voice on."); else { try{ speechSynthesis.cancel(); }catch(e){} }
+});
+document.addEventListener("keydown",function(e){
+  if(T.el.hidden) return;
+  if(e.key==="Escape") closeTimer();
+  else if(e.key===" "||e.key==="Spacebar"){ e.preventDefault(); T.main.click(); }
+});
+document.addEventListener("visibilitychange",function(){
+  if(document.visibilityState!=="visible"){ keepRun(true); flush(); return; }
+  if(T.el.hidden||!running) return;
+  try{ if(ac&&ac.state==="suspended") ac.resume(); }catch(e){}
+  holdOpen();
+  var was=lastIdx; lastIdx=-1; render();
+  if(was===lastIdx){ var sg=segs[lastIdx]; if(sg) cue(sg.k==="run"?"run":"walk", sg.say); }
+});
+window.addEventListener("pagehide",function(){ keepRun(true); flush(); });
+
+/* ================= resume banner ================= */
+function showResume(){
+  var r=readRun(), box=$("resume");
+  if(!r||!T.el.hidden){ box.hidden=true; return; }
+  var m=metaFor(r.w); if(!m){ box.hidden=true; return; }
+  $("resumeT").textContent="Week "+r.w+", session "+r.no+" — unfinished";
+  $("resumeS").textContent=fmt(r.sec)+" in · "+m.label;
+  box.hidden=false;
+}
+$("resumeGo").addEventListener("click",function(){
+  var r=readRun(); if(r) openTimer(r.w,r.sec,r.no);
+});
+$("resumeX").addEventListener("click",function(){ stashRun(null); showResume(); });
+
+/* ================= wiring ================= */
+plan.addEventListener("click",function(e){
+  var t=e.target.closest ? e.target.closest("[data-id],[data-go]") : null;
+  if(!t) return;
+  if(t.hasAttribute("data-go")){ openTimer(parseInt(t.getAttribute("data-go"),10)); return; }
+  var id=t.getAttribute("data-id");
+  if(state.done[id]){ delete state.done[id]; paint(); persist(); }
+  else logSession(id, t.getAttribute("aria-label"));
+});
+$("start").addEventListener("click",function(){
+  var up=nextUp();
+  openTimer(up?up.m.w:META[META.length-1].w);
+});
+$("quicklog").addEventListener("click",function(){
+  var up=nextUp(); if(!up) return;
+  logSession("w"+up.m.w+"s"+up.no, "Week "+up.m.w+", session "+up.no);
+});
+
+/* ================= boot ================= */
+function boot(retry){
+  if(!retry){ buildPlan(); state=newest(); paint(); showResume(); setSave("ready"); }
+  fetch("data/progress.json",{cache:"no-store"}).then(function(r){ return r.ok?r.json():null; })
+  .catch(function(){ return null; })
+  .then(function(remote){
+    if(remote&&remote.done){
+      remoteOk=true;
+      if((remote.updated||0)>(state.updated||0)){ state=adopt(remote); writeLocal(); paint(); }
+    }
+    if(window.claude&&typeof window.claude.use==="function") return window.claude.use("artifact");
+    return null;
+  })
+  .then(function(ns){
+    api=ns||null;
+    if(!api){ lastCode="not_granted"; setSave("local"); }
+    else setSave(remoteOk?"cloud":"ready");
+  })
+  .catch(function(){ lastCode="init_failed"; setSave("local"); });
+}
+boot();
+})();
+</script>
