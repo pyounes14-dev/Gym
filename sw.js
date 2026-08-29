@@ -1,6 +1,6 @@
 // Service worker for true offline use on iOS home screen.
 // Cache-first for the app shell so it loads with no network at the gym.
-const CACHE = 'gymlog-v4';
+const CACHE = 'gymlog-v5';
 const ASSETS = [
   './',
   './index.html',
@@ -20,6 +20,8 @@ const ASSETS = [
   './splash/splash-1242x2208.png',
   './splash/splash-750x1334.png',
   './run.html',
+  './fonts/archivo-var.woff2',
+  './fonts/martian-var.woff2',
   './run.webmanifest',
   './run-icon-180.png',
   './run-icon-192.png',

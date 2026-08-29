@@ -65,7 +65,19 @@ never makes the jump that ends most Couch-to-5K attempts.
 
 Progress is `localStorage` plus `navigator.storage.persist()`, with Export/Restore JSON
 on the Today tab — the same data-safety model as Gym Log, and the way across to a new
-phone. There are no external requests: system fonts, no libraries, nothing to fetch.
+phone. There are no external requests: two variable fonts (Archivo, Martian Mono) are
+subset and served from `fonts/`, precached by the service worker, so the app renders
+identically with no signal. No libraries, nothing fetched at runtime.
+
+**Look.** The design is a chronograph. The Today dial carries 48 ticks — one per
+session, grouped in threes with a gap between weeks, so the ring is countable as weeks
+rather than a bare percentage. The timer is the same instrument running: the outer ring
+lays out the whole session with each segment's arc as long as it lasts, the inner ring
+drains over the interval you're actually in, and a hairline playhead sweeps the session.
+The timer panel pins its own dark tokens in both themes — a white screen at dawn is
+hostile, and inheriting light-theme ink onto a hardcoded dark ground is how that breaks.
+Numerals are Archivo at width 125%; labels are Martian Mono. Motion (entrance stagger,
+tick draw-in, number roll-up) is gated on `prefers-reduced-motion`.
 
 A hosted-on-claude.ai copy also exists as an artifact. It syncs to a Claude account but
 needs a connection to open, so `run.html` is the one to use for actual runs. If you edit
