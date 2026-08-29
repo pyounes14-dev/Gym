@@ -7,6 +7,10 @@ did last time** — what weight and reps to hit (and beat).
 No accounts. No backend. No paid services. Works **offline** from the home screen.
 Your data stays on your device.
 
+The same site also ships **Slow Is the Point** (`run.html`) — a 16-week run/walk plan to a
+first 5K with a session timer. It installs as its own home-screen app, side by side with
+Gym Log. Same rules: offline, no account, data on the device.
+
 <p align="center">
   <img src="docs/screenshot-picker.png" width="30%" alt="Exercise picker" />
   <img src="docs/screenshot-log.png" width="30%" alt="Logging screen" />
@@ -45,6 +49,28 @@ Your data stays on your device.
 - **lb** by default, with a **kg** toggle in Settings; configurable rest duration.
 - Dark, phone-first UI with large tap targets; designed for one-handed use.
 
+## Slow Is the Point (`run.html`)
+
+A 16-week run/walk progression to a continuous 30 minutes, built around the fact that
+lungs adapt in weeks while tendons take months — so it grows running volume slowly and
+never makes the jump that ends most Couch-to-5K attempts.
+
+- **Today** — the next session and one Start button. That's the whole home screen.
+- **Session timer** — full-screen, colour-coded run/walk, voice and vibration cues, a
+  three-beep countdown into each change, and Now Playing controls on the lock screen.
+- **Resume** — if iOS suspends the tab mid-run, the app offers to pick up at the second
+  it stopped (held six hours; runs under 20 seconds are ignored).
+- **One-tap logging** with undo, or tap any numbered box in **Plan** to log by hand.
+- **Why** — the reasoning and the sources behind the progression.
+
+Progress is `localStorage` plus `navigator.storage.persist()`, with Export/Restore JSON
+on the Today tab — the same data-safety model as Gym Log, and the way across to a new
+phone. There are no external requests: system fonts, no libraries, nothing to fetch.
+
+A hosted-on-claude.ai copy also exists as an artifact. It syncs to a Claude account but
+needs a connection to open, so `run.html` is the one to use for actual runs. If you edit
+one, port the change to the other — they are parallel copies, not a shared source.
+
 ## Data safety (important)
 
 There's no server, so everything lives in your browser's local storage. iOS can clear
@@ -65,15 +91,17 @@ Pages, etc.). Must be served over **HTTPS** for the service worker / offline to 
 Files that must ship together:
 
 ```
-index.html
-sw.js
-manifest.webmanifest
+index.html                          Gym Log
+run.html                            Slow Is the Point (running)
+sw.js                               caches both apps for offline
+manifest.webmanifest  run.webmanifest
 icon-180.png  icon-192.png  icon-512.png
-splash/          (iOS launch-screen images)
+run-icon-180.png  run-icon-192.png  run-icon-512.png
+splash/  run-splash/                (iOS launch-screen images)
 ```
 
 (`docs/` and `tools/` are not needed at runtime. Regenerate icons + splash with
-`node tools/generate-icons.js`.)
+`node tools/generate-icons.js` and `node tools/generate-run-icons.js`.)
 
 ### Netlify Drop (easiest)
 1. Go to <https://app.netlify.com/drop>.
@@ -84,10 +112,13 @@ splash/          (iOS launch-screen images)
 2. Open the published `https://…/index.html`.
 
 ### Add to iPhone home screen
-1. Open the HTTPS URL in **Safari**.
+Do this once per app — they install separately and get their own icons.
+
+1. Open the HTTPS URL in **Safari** (`/index.html` for Gym Log, `/run.html` for the
+   running plan).
 2. **Share → Add to Home Screen**.
 3. Launch it once while online so the service worker caches everything — after that it
-   **runs fully offline** at the gym.
+   **runs fully offline** at the gym or on the road.
 
 ## Local preview
 
@@ -108,7 +139,8 @@ python3 -m http.server 8000
 
 ### Regenerate icons
 ```sh
-node tools/generate-icons.js
+node tools/generate-icons.js       # Gym Log: dumbbell mark, violet
+node tools/generate-run-icons.js   # Slow Is the Point: interval mark, orange
 ```
 
 ### Run the end-to-end test (Playwright)
