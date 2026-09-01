@@ -1,6 +1,6 @@
 // Service worker for true offline use on iOS home screen.
 // Cache-first for the app shell so it loads with no network at the gym.
-const CACHE = 'gymlog-v5';
+const CACHE = 'gymlog-v6';
 const ASSETS = [
   './',
   './index.html',
@@ -70,6 +70,19 @@ self.addEventListener('fetch', (e) => {
         }
         return res;
       }).catch(() => caches.match('./index.html'));
+    })
+  );
+});
+
+// A phase alert from the run timer: bring the app forward rather than opening a duplicate.
+self.addEventListener('notificationclick', (e) => {
+  e.notification.close();
+  e.waitUntil(
+    self.clients.matchAll({ type: 'window', includeUncontrolled: true }).then((wins) => {
+      for (const w of wins) {
+        if (w.url.includes('run.html') && 'focus' in w) return w.focus();
+      }
+      if (self.clients.openWindow) return self.clients.openWindow('./run.html');
     })
   );
 });

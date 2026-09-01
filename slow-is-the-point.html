@@ -197,11 +197,21 @@ button{font-family:inherit;cursor:pointer;touch-action:manipulation;
 .data-t{font-weight:700;font-size:.68rem;letter-spacing:.16em;text-transform:uppercase;
   font-family:var(--mono);color:var(--ink2)}
 .data-p{font-size:.79rem;line-height:1.55;color:var(--mut);margin:10px 0 14px}
+.seg2{display:flex;background:var(--steel2);border:var(--rule);border-radius:11px;
+  padding:3px;margin-top:13px}
+.seg2 button{flex:1;border:none;background:none;color:var(--mut);border-radius:9px;
+  font-family:var(--mono);font-size:.58rem;letter-spacing:.1em;text-transform:uppercase;
+  font-weight:600;padding:12px 6px;min-height:46px;line-height:1.3;
+  transition:background .18s,color .18s}
+.seg2 button[aria-pressed="true"]{background:var(--run);color:var(--run-ink)}
 .data-btns{display:flex;gap:8px}
+.data-btns button[aria-pressed="true"]{border-color:var(--run);color:var(--run)}
+
 .data-btns button{flex:1;border:1px solid var(--line2);background:var(--steel2);color:var(--ink);
   border-radius:11px;font-weight:700;font-size:.7rem;letter-spacing:.1em;text-transform:uppercase;
   padding:14px 8px;min-height:48px;transition:border-color .16s,color .16s}
 .data-btns button:hover{border-color:var(--run);color:var(--run)}
+.data-btns button[aria-pressed="true"]{border-color:var(--run);color:var(--run)}
 .save{display:inline-flex;align-items:center;gap:8px;color:var(--mut);font-family:var(--mono);
   font-size:.58rem;letter-spacing:.11em;text-transform:uppercase;font-variation-settings:"wdth" 82}
 .save b{width:5px;height:5px;border-radius:50%;background:var(--ok);flex:0 0 5px;
@@ -460,6 +470,19 @@ button{font-family:inherit;cursor:pointer;touch-action:manipulation;
         <li><b>Three sessions a week</b>, never two days in a row.</li>
         <li>Take every walk break, <b>especially</b> on the days you feel great.</li>
       </ol>
+    </div>
+
+    <div class="data reveal">
+      <div class="data-h"><span class="data-t">Sound &amp; alerts</span></div>
+      <div class="seg2" role="group" aria-label="Audio mode">
+        <button type="button" id="modePolite" aria-pressed="true">Keep my music</button>
+        <button type="button" id="modeBg" aria-pressed="false">Alert in background</button>
+      </div>
+      <p class="data-p" id="modeNote"></p>
+      <div class="data-btns">
+        <button type="button" id="notifyBtn" aria-pressed="false">Notify me</button>
+        <button type="button" id="voiceBtn" aria-pressed="true">Voice on</button>
+      </div>
     </div>
 
     <div class="data reveal">
@@ -911,9 +934,13 @@ var T={el:$("timer"),ctx:$("tctx"),ph:$("tph"),clock:$("tclock"),rep:$("trep"),n
 var segs=[],wkMeta=null,sessId=null,sessNo=1,total=0;
 var startedAt=0,offset=0,running=false,ticker=null,lastIdx=-1,finished=false,cdAt=-1;
 var ac=null,wake=null,media=null;
-var voiceOn=true;
+var voiceOn=true, audioMode="polite", notifyOn=false;
 try{ voiceOn = localStorage.getItem("sitp-voice")!=="0"; }catch(e){}
-T.voice.setAttribute("aria-pressed",voiceOn?"true":"false");
+try{ audioMode = localStorage.getItem("sitp-audio")==="background" ? "background" : "polite"; }catch(e){}
+try{
+  notifyOn = localStorage.getItem("sitp-notify")==="1"
+    && ("Notification" in window) && Notification.permission==="granted";
+}catch(e){}
 
 function buildSegs(m){
   var out=[{k:"warm",sec:300,label:"Warm up",sub:"Brisk walk",say:"Warm up. Brisk walk."}];
@@ -933,26 +960,60 @@ function buildSegs(m){
   out.push({k:"cool",sec:300,label:"Cool down",sub:"Easy walk. You're done.",say:"Cool down. Nice work."});
   return out;
 }
+/* ═══════════ sound ═══════════
+   Two modes, because on iOS they are genuinely exclusive.
+
+   "polite" (default): we never take the audio session. No silent keep-alive
+   track, no Now Playing metadata, and where the AudioSession API exists we ask
+   for "transient" so a cue ducks your music for a moment instead of stopping
+   it. Cost: iOS suspends a backgrounded tab that holds no audio session, so
+   cues only land while the app is on screen.
+
+   "background": we hold the session on purpose — silent loop, keep-alive
+   oscillator, Now Playing. Cues land with the app in the background. Cost:
+   iOS hands the session to us and pauses Spotify. */
+function applySession(){
+  try{
+    if(navigator.audioSession)
+      navigator.audioSession.type = (audioMode==="background") ? "playback" : "transient";
+  }catch(e){}
+}
 function audio(){
   if(ac) return ac;
   try{
     var C=window.AudioContext||window.webkitAudioContext; if(!C) return null;
+    applySession();
     ac=new C();
-    var o=ac.createOscillator(),g=ac.createGain();
-    g.gain.value=0.0006; o.frequency.value=55; o.connect(g); g.connect(ac.destination); o.start();
   }catch(e){ ac=null; }
   return ac;
 }
-function beep(f,d,at){
-  var a=audio(); if(!a) return;
+/* An inaudible tone is what stops the context being suspended in the
+   background. Only in background mode — it is also what displaces Spotify. */
+function keepAlive(on){
+  var a=ac;
+  if(on&&a&&!hum){
+    try{
+      hum=a.createOscillator(); var g=a.createGain();
+      g.gain.value=0.0006; hum.frequency.value=55;
+      hum.connect(g); g.connect(a.destination); hum.start();
+    }catch(e){ hum=null; }
+  }else if(!on&&hum){ try{ hum.stop(); }catch(e){} hum=null; }
+}
+function tone(a,f,d,at){
   try{
-    if(a.state==="suspended") a.resume();
-    var t=a.currentTime+(at||0),o=a.createOscillator(),g=a.createGain();
+    var t=a.currentTime+Math.max(0,at||0),o=a.createOscillator(),g=a.createGain();
     o.type="sine"; o.frequency.value=f;
     g.gain.setValueAtTime(0.0001,t); g.gain.linearRampToValueAtTime(0.3,t+0.012);
     g.gain.exponentialRampToValueAtTime(0.0008,t+d);
     o.connect(g); g.connect(a.destination); o.start(t); o.stop(t+d+0.04);
-  }catch(e){}
+    schedNodes.push(o);
+    return o;
+  }catch(e){ return null; }
+}
+function beep(f,d,at){
+  var a=audio(); if(!a) return;
+  if(a.state==="suspended"){ try{ a.resume(); }catch(e){} }
+  tone(a,f,d,at);
 }
 function buzz(p){ try{ if(navigator.vibrate) navigator.vibrate(p); }catch(e){} }
 function say(txt){
@@ -963,12 +1024,90 @@ function say(txt){
     speechSynthesis.cancel(); speechSynthesis.speak(u);
   }catch(e){}
 }
+/* The beep pattern for arriving at a phase. `at` is seconds from now, so the
+   same function serves both the immediate cue and the pre-scheduled ones. */
+function phaseBeeps(a,k,at){
+  if(k==="run"){ tone(a,920,.15,at); tone(a,920,.15,at+.2); }
+  else if(k==="done"){ tone(a,660,.19,at); tone(a,830,.19,at+.23); tone(a,990,.4,at+.46); }
+  else { tone(a,430,.32,at); }
+}
+function phaseBuzz(k){
+  if(k==="run") buzz([130,90,130]);
+  else if(k==="done") buzz([200,110,200,110,320]);
+  else buzz([240]);
+}
 function cue(k,txt){
-  if(k==="run"){ beep(920,.15,0); beep(920,.15,.2); buzz([130,90,130]); }
-  else if(k==="done"){ beep(660,.19,0); beep(830,.19,.23); beep(990,.4,.46); buzz([200,110,200,110,320]); }
-  else { beep(430,.32,0); buzz([240]); }
+  var a=audio();
+  if(a){ if(a.state==="suspended"){ try{ a.resume(); }catch(e){} } phaseBeeps(a,k,0); }
+  phaseBuzz(k);
   setTimeout(function(){ say(txt); }, 430);
 }
+
+/* ═══════════ alerting a tab you have walked away from ═══════════
+   A hidden tab's setInterval is throttled to about once a minute, which is why
+   the cues used to go silent the moment you switched to Anki. So every cue for
+   the rest of the session is scheduled up front on the audio clock, which the
+   audio thread keeps rendering on its own, and a matching notification is
+   queued for each change. Both are torn down and rebuilt on pause, resume,
+   skip and close, so nothing fires for a session you have left. */
+var cueTimers=[], schedNodes=[], hum=null;
+function clearScheduled(){
+  for(var i=0;i<cueTimers.length;i++) clearTimeout(cueTimers[i]);
+  cueTimers=[];
+  for(var j=0;j<schedNodes.length;j++){ try{ schedNodes[j].stop(); }catch(e){} }
+  schedNodes=[];
+}
+function scheduleAhead(){
+  clearScheduled();
+  if(!running||finished) return;
+  var a=audio();
+  if(a&&a.state==="suspended"){ try{ a.resume(); }catch(e){} }
+  var e=elapsed(), acc=0;
+  for(var i=0;i<segs.length;i++){
+    acc+=segs[i].sec;
+    var at=acc-e;                       /* this segment ends, the next begins */
+    if(at<=0.05) continue;
+    var nx=segs[i+1], k=nx?(nx.k==="run"?"run":"walk"):"done";
+    if(a){
+      for(var c=3;c>=1;c--){ if(at-c>0.05) tone(a,700,.07,at-c); }
+      phaseBeeps(a,k,at);
+    }
+    cueTimers.push(setTimeout(makeAlert(nx,k),Math.round(at*1000)));
+  }
+}
+function makeAlert(nx,k){
+  return function(){
+    phaseBuzz(k);
+    if(document.hidden) notify(
+      nx ? (nx.label.toUpperCase()+" · "+fmt(nx.sec)) : "Session complete",
+      nx ? nx.sub : "Open the app to log it"
+    );
+    else say(nx?nx.say:"Session complete. Nice work.");
+  };
+}
+function notify(title,body){
+  if(!notifyOn) return;
+  try{
+    if(!("Notification" in window)||Notification.permission!=="granted") return;
+    var opts={body:body,tag:"sitp-phase",renotify:true,silent:false,
+              icon:"./run-icon-192.png"};
+    if(navigator.serviceWorker&&navigator.serviceWorker.ready){
+      navigator.serviceWorker.ready.then(function(r){ r.showNotification(title,opts); })
+        .catch(function(){ try{ new Notification(title,opts); }catch(e){} });
+    } else { new Notification(title,opts); }
+  }catch(e){}
+}
+function dropNotice(){
+  try{
+    if(navigator.serviceWorker&&navigator.serviceWorker.ready)
+      navigator.serviceWorker.ready.then(function(r){
+        r.getNotifications({tag:"sitp-phase"}).then(function(ns){
+          for(var i=0;i<ns.length;i++) ns[i].close();
+        }).catch(function(){});
+      }).catch(function(){});
+  }catch(e){}
+}
+
 function silentSrc(sec){
   var sr=8000,n=sr*sec,b=new ArrayBuffer(44+n*2),v=new DataView(b);
   function w(o,t){ for(var i=0;i<t.length;i++) v.setUint8(o+i,t.charCodeAt(i)); }
@@ -979,6 +1118,8 @@ function silentSrc(sec){
   return URL.createObjectURL(new Blob([b],{type:"audio/wav"}));
 }
 function holdOpen(){
+  if(audioMode!=="background") return;      /* this is the line that took Spotify */
+  keepAlive(true);
   try{
     if(!media){
       media=new Audio(silentSrc(2)); media.loop=true; media.preload="auto";
@@ -987,8 +1128,9 @@ function holdOpen(){
     var p=media.play(); if(p&&p.catch) p.catch(function(){});
   }catch(e){}
 }
-function letGo(){ try{ if(media) media.pause(); }catch(e){} }
+function letGo(){ keepAlive(false); try{ if(media) media.pause(); }catch(e){} }
 function nowPlaying(a,b){
+  if(audioMode!=="background") return;      /* claiming Now Playing displaces Spotify */
   try{
     if(!navigator.mediaSession) return;
     if(window.MediaMetadata) navigator.mediaSession.metadata=new MediaMetadata({title:a,artist:b,album:"Slow Is the Point"});
@@ -998,6 +1140,10 @@ function nowPlaying(a,b){
     navigator.mediaSession.setActionHandler("nexttrack",function(){ skipSeg(); });
   }catch(e){}
 }
+function releaseSession(){
+  try{ if(navigator.mediaSession){ navigator.mediaSession.metadata=null;
+    navigator.mediaSession.playbackState="none"; } }catch(e){}
+}
 function lock(){
   try{
     if(navigator.wakeLock&&navigator.wakeLock.request)
@@ -1005,6 +1151,10 @@ function lock(){
   }catch(e){}
 }
 function unlock(){ try{ if(wake&&wake.release){ wake.release(); wake=null; } }catch(e){} }
+
+function fmt(x){ x=Math.max(0,Math.ceil(x)); var m=Math.floor(x/60),q=x%60; return m+":"+(q<10?"0":"")+q; }
+function elapsed(){ return running?offset+(Date.now()-startedAt)/1000:offset; }
+function locate(e){ var a=0; for(var i=0;i<segs.length;i++){ a+=segs[i].sec; if(e<a) return {i:i,rem:a-e}; } return {i:segs.length,rem:0}; }
 
 function fmt(x){ x=Math.max(0,Math.ceil(x)); var m=Math.floor(x/60),q=x%60; return m+":"+(q<10?"0":"")+q; }
 function elapsed(){ return running?offset+(Date.now()-startedAt)/1000:offset; }
@@ -1073,15 +1223,13 @@ function render(){
     T.ph.textContent=sg.label; T.rep.textContent=sg.sub;
     var nx=segs[at.i+1];
     T.next.textContent = nx ? ("then " + nx.label.toLowerCase() + " · " + fmt(nx.sec)) : "then you're done";
-    if(running) cue(sg.k==="run"?"run":"walk", sg.say);
+    if(running&&!document.hidden){ phaseBuzz(sg.k==="run"?"run":"walk"); say(sg.say); }
     nowPlaying(sg.label.toUpperCase(), "Week "+wkMeta.w+" · "+sg.sub);
     lastIdx=at.i; cdAt=-1; paintRail(at.i); paintChrono(at.i);
   }
   T.clock.textContent=fmt(at.rem);
   setSweep(segs[at.i].sec ? at.rem/segs[at.i].sec : 0);
   setHair(e/total);
-  var r=Math.ceil(at.rem);
-  if(running&&r<=3&&r>=1&&r!==cdAt){ cdAt=r; beep(700,.07,0); }
   T.left.textContent=fmt(total-e)+" left in session";
   T.seg.textContent=(at.i+1)+" / "+segs.length;
   keepRun();
@@ -1093,24 +1241,27 @@ function play(){
   T.main.textContent="Pause"; T.skip.hidden=false; lock();
   if(!ticker) ticker=setInterval(render,200);
   render();
+  var at0=locate(elapsed());
+  if(at0.i<segs.length) cue(segs[at0.i].k==="run"?"run":"walk", segs[at0.i].say);
+  scheduleAhead();
 }
 function pause(){
   if(!running) return;
   offset=elapsed(); running=false; startedAt=0;
-  T.main.textContent="Resume"; unlock(); letGo(); keepRun(true);
+  T.main.textContent="Resume"; unlock(); letGo(); clearScheduled(); keepRun(true);
   try{ if(navigator.mediaSession) navigator.mediaSession.playbackState="paused"; }catch(e){}
   render();
 }
 function skipSeg(){
   var at=locate(elapsed()); if(at.i>=segs.length) return;
   var a=0; for(var i=0;i<=at.i;i++) a+=segs[i].sec;
-  offset=a; startedAt=Date.now(); render(); keepRun(true);
+  offset=a; startedAt=Date.now(); render(); scheduleAhead(); keepRun(true);
 }
 function finish(){
   if(finished) return;
   finished=true; running=false; offset=total;
   if(ticker){ clearInterval(ticker); ticker=null; }
-  unlock(); stashRun(null);
+  unlock(); stashRun(null); clearScheduled();
   cue("done","Session complete. Nice work.");
   nowPlaying("SESSION COMPLETE","Week "+wkMeta.w);
   setTimeout(letGo,4500);
@@ -1123,7 +1274,7 @@ function finish(){
 }
 function closeTimer(){
   if(ticker){ clearInterval(ticker); ticker=null; }
-  running=false; keepRun(true); unlock(); letGo();
+  running=false; keepRun(true); unlock(); letGo(); clearScheduled(); releaseSession(); dropNotice();
   try{ if(window.speechSynthesis) speechSynthesis.cancel(); }catch(e){}
   T.el.hidden=true; document.body.style.overflow="";
   if(readRun()) show("today");
@@ -1167,10 +1318,61 @@ T.main.addEventListener("click",function(){
 });
 T.skip.addEventListener("click",skipSeg);
 $("tclose").addEventListener("click",closeTimer);
-T.voice.addEventListener("click",function(){
-  voiceOn=!voiceOn; T.voice.setAttribute("aria-pressed",voiceOn?"true":"false");
+function toggleVoice(){
+  voiceOn=!voiceOn;
   try{ localStorage.setItem("sitp-voice",voiceOn?"1":"0"); }catch(e){}
+  paintSound();
   if(voiceOn) say("Voice on."); else { try{ speechSynthesis.cancel(); }catch(e){} }
+}
+T.voice.addEventListener("click",toggleVoice);
+$("voiceBtn").addEventListener("click",toggleVoice);
+
+function paintSound(){
+  $("modePolite").setAttribute("aria-pressed", audioMode==="background"?"false":"true");
+  $("modeBg").setAttribute("aria-pressed", audioMode==="background"?"true":"false");
+  $("modeNote").textContent = audioMode==="background"
+    ? "Cues keep coming while you are in another app. On iPhone this takes the audio session, so Spotify pauses for the length of a session."
+    : "Cues duck your music for a moment instead of stopping it. iPhone suspends this app when you switch away, so turn on notifications to be alerted there.";
+  $("notifyBtn").setAttribute("aria-pressed", notifyOn?"true":"false");
+  $("notifyBtn").textContent = notifyOn ? "Notifying" : "Notify me";
+  $("voiceBtn").setAttribute("aria-pressed", voiceOn?"true":"false");
+  $("voiceBtn").textContent = voiceOn ? "Voice on" : "Voice off";
+  T.voice.setAttribute("aria-pressed",voiceOn?"true":"false");
+}
+function setMode(m){
+  audioMode=m;
+  try{ localStorage.setItem("sitp-audio",m); }catch(e){}
+  applySession();
+  if(m==="background"){ if(running) holdOpen(); }
+  else { letGo(); releaseSession(); }
+  paintSound();
+  toast(m==="background" ? "Background alerts on — Spotify pauses during a session"
+                         : "Your music keeps playing");
+}
+$("modePolite").addEventListener("click",function(){ setMode("polite"); });
+$("modeBg").addEventListener("click",function(){ setMode("background"); });
+$("notifyBtn").addEventListener("click",function(){
+  if(notifyOn){
+    notifyOn=false;
+    try{ localStorage.setItem("sitp-notify","0"); }catch(e){}
+    paintSound(); return;
+  }
+  if(!("Notification" in window)){ toast("This browser can't show notifications"); return; }
+  var done=function(p){
+    if(p==="granted"){
+      notifyOn=true;
+      try{ localStorage.setItem("sitp-notify","1"); }catch(e){}
+      paintSound();
+      notify("Alerts are on","You'll get one at every run and walk change");
+    } else {
+      toast(p==="denied" ? "Notifications are blocked in your browser settings"
+                         : "Notifications weren't allowed");
+    }
+  };
+  try{
+    var r=Notification.requestPermission(done);
+    if(r&&r.then) r.then(done).catch(function(){ toast("Couldn't turn on notifications"); });
+  }catch(e){ toast("Couldn't turn on notifications"); }
 });
 document.addEventListener("keydown",function(e){
   if(T.el.hidden) return;
@@ -1179,11 +1381,12 @@ document.addEventListener("keydown",function(e){
 });
 document.addEventListener("visibilitychange",function(){
   if(document.visibilityState!=="visible"){ keepRun(true); return; }
+  dropNotice();
   if(T.el.hidden||!running) return;
   try{ if(ac&&ac.state==="suspended") ac.resume(); }catch(e){}
   holdOpen();
-  var was=lastIdx; lastIdx=-1; render();
-  if(was===lastIdx){ var sg=segs[lastIdx]; if(sg) cue(sg.k==="run"?"run":"walk", sg.say); }
+  lastIdx=-1; render();
+  scheduleAhead();
 });
 window.addEventListener("pagehide",function(){ keepRun(true); });
 
@@ -1249,7 +1452,7 @@ setTimeout(function(){
 },1500);
 
 function boot(retry){
-  if(!retry){ grain(); buildPlan(); buildDial(); state=newest(); paint(); showResume(); setSave("ready"); reveal(); }
+  if(!retry){ grain(); buildPlan(); buildDial(); state=newest(); paint(); showResume(); setSave("ready"); paintSound(); reveal(); }
   fetch("data/progress.json",{cache:"no-store"}).then(function(r){ return r.ok?r.json():null; })
   .catch(function(){ return null; })
   .then(function(remote){

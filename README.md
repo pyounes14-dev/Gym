@@ -60,6 +60,13 @@ never makes the jump that ends most Couch-to-5K attempts.
   three-beep countdown into each change, and Now Playing controls on the lock screen.
 - **Resume** — if iOS suspends the tab mid-run, the app offers to pick up at the second
   it stopped (held six hours; runs under 20 seconds are ignored).
+- **Sound & alerts** — two modes, because on iOS they are genuinely exclusive.
+  *Keep my music* (default) never claims the audio session: no silent keep-alive
+  track, no Now Playing metadata, and `navigator.audioSession.type = "transient"`
+  where supported, so a cue ducks Spotify for a moment instead of stopping it.
+  *Alert in background* claims it deliberately, so cues land while you are in
+  another app — and iOS pauses Spotify for the length of a session. Optional
+  notifications cover the first mode when the app is off screen.
 - **One-tap logging** with undo, or tap any numbered box in **Plan** to log by hand.
 - **Why** — the reasoning and the sources behind the progression.
 
