@@ -7,6 +7,10 @@ did last time** — what weight and reps to hit (and beat).
 No accounts. No backend. No paid services. Works **offline** from the home screen.
 Your data stays on your device.
 
+The site ships the same app **twice** — `index.html` and `her.html` — so two people can
+each have their own log, their own home-screen icon and their own history, with nothing
+shared between them. See [A second copy](#a-second-copy-herhtml).
+
 The same site also ships **Slow Is the Point** (`run.html`) — a 16-week run/walk plan to a
 first 5K with a session timer. It installs as its own home-screen app, side by side with
 Gym Log. Same rules: offline, no account, data on the device.
@@ -48,6 +52,61 @@ Gym Log. Same rules: offline, no account, data on the device.
   the picker or **Settings → Add custom exercise**. No muscle tagging to fuss with.
 - **lb** by default, with a **kg** toggle in Settings; configurable rest duration.
 - Dark, phone-first UI with large tap targets; designed for one-handed use.
+
+## A second copy (`her.html`)
+
+`her.html` is the same app again, for a second person. Everything in the sections above
+applies to it — same logging loop, same rest timer, same PR board, same offline install.
+
+<p align="center">
+  <img src="docs/screenshot-her-picker.png" width="30%" alt="Exercise picker, second copy" />
+  <img src="docs/screenshot-her-log.png" width="30%" alt="Logging screen, second copy" />
+  <img src="docs/screenshot-her-progress.png" width="30%" alt="Progress, second copy" />
+</p>
+
+What makes it a separate app rather than a second tab:
+
+- **Its own data.** It reads and writes `gymlog.her.v1`; the main app owns `gymlog.v1`.
+  Both apps live on one origin, so a shared key would mean one shared log — this is the
+  reason the copy exists. Exports, restores and **Erase all data** all stay on one side.
+- **Its own install.** Own manifest, own icon and launch screens, own name, so it sits
+  on the home screen as its own app — even on the same phone.
+- **Its own accent** (cyan, against the main app's violet), so a glance at the screen
+  tells you whose log is open.
+
+The running app (`run.html`) is still one app, shared by whoever installs it on their
+own phone.
+
+### Making and updating the copy
+
+`index.html` is the source of truth. `her.html` is **generated** from it — never edit
+`her.html` by hand, it has a banner saying so. After changing the main app:
+
+```sh
+node tools/make-her-copy.js     # rebuilds her.html + her.webmanifest from index.html
+```
+
+The script applies a fixed list of substitutions (name, accent, storage key, asset
+paths) and states how many times each must match. If a change to `index.html` breaks a
+rule — a renamed token, a reworded footer — the build **fails and names the rule**
+rather than shipping a half-converted copy. Update the rule list in
+`tools/make-her-copy.js` and re-run.
+
+Her name, accent and storage key live in one file, `tools/her-theme.js`. To make the
+copy hers:
+
+```sh
+# edit tools/her-theme.js:  name: "Maya's Log", shortName: 'Maya', accent: 'rose'
+node tools/make-her-copy.js
+node tools/generate-her-icons.js   # re-tints the icon + launch screens to match
+```
+
+Accent presets are `cyan`, `rose` and `magenta` — green, amber and red are already
+spoken for inside the app (beat-last-time, warnings, delete). She can also rename the
+icon herself in Safari's **Add to Home Screen** sheet.
+
+Want a third log? Copy `tools/her-theme.js` and the two scripts, pick a new filename
+and storage key, and add the new assets to `sw.js`.
 
 ## Slow Is the Point (`run.html`)
 
@@ -111,12 +170,14 @@ Files that must ship together:
 
 ```
 index.html                          Gym Log
+her.html                            Gym Log, second copy (own data + icon)
 run.html                            Slow Is the Point (running)
-sw.js                               caches both apps for offline
-manifest.webmanifest  run.webmanifest
+sw.js                               caches all three apps for offline
+manifest.webmanifest  her.webmanifest  run.webmanifest
 icon-180.png  icon-192.png  icon-512.png
+her-icon-180.png  her-icon-192.png  her-icon-512.png
 run-icon-180.png  run-icon-192.png  run-icon-512.png
-splash/  run-splash/                (iOS launch-screen images)
+splash/  her-splash/  run-splash/   (iOS launch-screen images)
 ```
 
 (`docs/` and `tools/` are not needed at runtime. Regenerate icons + splash with
@@ -133,8 +194,8 @@ splash/  run-splash/                (iOS launch-screen images)
 ### Add to iPhone home screen
 Do this once per app — they install separately and get their own icons.
 
-1. Open the HTTPS URL in **Safari** (`/index.html` for Gym Log, `/run.html` for the
-   running plan).
+1. Open the HTTPS URL in **Safari** (`/index.html` for Gym Log, `/her.html` for the
+   second copy, `/run.html` for the running plan).
 2. **Share → Add to Home Screen**.
 3. Launch it once while online so the service worker caches everything — after that it
    **runs fully offline** at the gym or on the road.
@@ -150,7 +211,8 @@ python3 -m http.server 8000
 
 ## Tech notes
 
-- Single self-contained `index.html` (vanilla JS, no frameworks, no external requests).
+- Single self-contained `index.html` (vanilla JS, no frameworks, no external requests);
+  `her.html` is generated from it by `tools/make-her-copy.js`.
 - `sw.js` service worker provides reliable offline caching on iOS (cache-first app shell).
 - `manifest.webmanifest` + Apple meta tags give true standalone home-screen behavior.
 - Storage: `localStorage` (persistent), plus `navigator.storage.persist()`.
@@ -159,12 +221,15 @@ python3 -m http.server 8000
 ### Regenerate icons
 ```sh
 node tools/generate-icons.js       # Gym Log: dumbbell mark, violet
+node tools/generate-her-icons.js   # Second copy: same mark, accent from tools/her-theme.js
 node tools/generate-run-icons.js   # Slow Is the Point: interval mark, orange
 ```
 
-### Run the end-to-end test (Playwright)
+### Run the end-to-end tests (Playwright)
 ```sh
-node tools/test-app.mjs
+node tools/test-app.mjs              # the acceptance test, against index.html
+APP=her.html node tools/test-app.mjs # the same test, against the second copy
+node tools/test-copies.mjs           # the two copies stay separate on one origin
 ```
 Drives a real browser through the acceptance test: pick a previously-trained exercise,
 see last time within one tap, log today's sets with zero typing, beat-last-time feedback,

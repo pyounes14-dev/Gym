@@ -1,0 +1,31 @@
+{
+  "name": "Her Gym Log",
+  "short_name": "Her Log",
+  "description": "Personal hypertrophy gym logger — see last time, beat it.",
+  "start_url": "./her.html",
+  "scope": "./",
+  "display": "standalone",
+  "orientation": "portrait",
+  "background_color": "#0c0e1c",
+  "theme_color": "#0c0e1c",
+  "icons": [
+    {
+      "src": "./her-icon-192.png",
+      "sizes": "192x192",
+      "type": "image/png",
+      "purpose": "any"
+    },
+    {
+      "src": "./her-icon-512.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "any"
+    },
+    {
+      "src": "./her-icon-512.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "maskable"
+    }
+  ]
+}

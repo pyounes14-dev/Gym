@@ -16,7 +16,11 @@ const server = createServer((req,res)=>{
 });
 await new Promise(r=>server.listen(0,r));
 const port = server.address().port;
-const base = `http://127.0.0.1:${port}/index.html`;
+// Which copy to exercise: APP=her.html runs the same acceptance test against the copy.
+const APP = process.env.APP || 'index.html';
+const STORE = process.env.KEY || (APP === 'her.html' ? 'gymlog.her.v1' : 'gymlog.v1');
+const base = `http://127.0.0.1:${port}/${APP}`;
+console.log(`driving /${APP} (localStorage ${STORE})`);
 
 const browser = await chromium.launch({ executablePath: '/opt/pw-browsers/chromium' }).catch(async()=>await chromium.launch());
 const ctx = await browser.newContext({ viewport:{width:390,height:844}, deviceScaleFactor:3, hasTouch:true });
@@ -52,12 +56,12 @@ await page.waitForTimeout(50);
 assert(await page.locator('#restTimer.hidden').count()===1, 'rest timer can be skipped');
 
 // ---- Back-date and reload (simulate next workout) ----
-await page.evaluate(()=>{
-  const KEY='gymlog.v1'; const d=JSON.parse(localStorage.getItem(KEY));
+await page.evaluate((KEY)=>{
+  const d=JSON.parse(localStorage.getItem(KEY));
   const wk = Date.now()-7*86400000; const ds = new Date(wk).toISOString().slice(0,10);
   d.logs.forEach(l=>{ l.date=ds; l.ts=new Date(wk).toISOString(); });
   localStorage.setItem(KEY, JSON.stringify(d));
-});
+}, STORE);
 await page.reload({ waitUntil:'networkidle' });
 
 // ---- Acceptance: last time within one tap, pre-filled, beat feedback ----
@@ -157,7 +161,7 @@ assert(dl!==null, 'export triggers a download');
 
 assert(errors.length===0, 'no console/page errors' + (errors.length?': '+errors.join(' | '):''));
 
-await page.screenshot({ path:'tools/screenshot-log.png' });
+await page.screenshot({ path:`tools/screenshot-log${APP === 'index.html' ? '' : '-' + APP.replace('.html','')}.png` });
 await browser.close();
 server.close();
 console.log('\nDONE. exitCode=', process.exitCode||0);
