@@ -1,0 +1,714 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover, maximum-scale=1, user-scalable=no" />
+<meta name="theme-color" content="#08090A" />
+<meta name="apple-mobile-web-app-capable" content="yes" />
+<meta name="mobile-web-app-capable" content="yes" />
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
+<meta name="apple-mobile-web-app-title" content="Study" />
+<link rel="manifest" href="./study.webmanifest" />
+<link rel="apple-touch-icon" href="./study-icon-180.png" />
+<link rel="icon" type="image/png" href="./study-icon-192.png" />
+<link rel="preload" as="font" type="font/woff2" href="./fonts/archivo-var.woff2" crossorigin />
+<link rel="preload" as="font" type="font/woff2" href="./fonts/martian-var.woff2" crossorigin />
+<link rel="apple-touch-startup-image" media="(device-width:440px) and (device-height:956px) and (-webkit-device-pixel-ratio:3) and (orientation:portrait)" href="./study-splash/splash-1320x2868.png" />
+<link rel="apple-touch-startup-image" media="(device-width:402px) and (device-height:874px) and (-webkit-device-pixel-ratio:3) and (orientation:portrait)" href="./study-splash/splash-1206x2622.png" />
+<link rel="apple-touch-startup-image" media="(device-width:430px) and (device-height:932px) and (-webkit-device-pixel-ratio:3) and (orientation:portrait)" href="./study-splash/splash-1290x2796.png" />
+<link rel="apple-touch-startup-image" media="(device-width:393px) and (device-height:852px) and (-webkit-device-pixel-ratio:3) and (orientation:portrait)" href="./study-splash/splash-1179x2556.png" />
+<link rel="apple-touch-startup-image" media="(device-width:428px) and (device-height:926px) and (-webkit-device-pixel-ratio:3) and (orientation:portrait)" href="./study-splash/splash-1284x2778.png" />
+<link rel="apple-touch-startup-image" media="(device-width:390px) and (device-height:844px) and (-webkit-device-pixel-ratio:3) and (orientation:portrait)" href="./study-splash/splash-1170x2532.png" />
+<link rel="apple-touch-startup-image" media="(device-width:375px) and (device-height:812px) and (-webkit-device-pixel-ratio:3) and (orientation:portrait)" href="./study-splash/splash-1125x2436.png" />
+<link rel="apple-touch-startup-image" media="(device-width:414px) and (device-height:896px) and (-webkit-device-pixel-ratio:3) and (orientation:portrait)" href="./study-splash/splash-1242x2688.png" />
+<link rel="apple-touch-startup-image" media="(device-width:414px) and (device-height:896px) and (-webkit-device-pixel-ratio:2) and (orientation:portrait)" href="./study-splash/splash-828x1792.png" />
+<link rel="apple-touch-startup-image" media="(device-width:414px) and (device-height:736px) and (-webkit-device-pixel-ratio:3) and (orientation:portrait)" href="./study-splash/splash-1242x2208.png" />
+<link rel="apple-touch-startup-image" media="(device-width:375px) and (device-height:667px) and (-webkit-device-pixel-ratio:2) and (orientation:portrait)" href="./study-splash/splash-750x1334.png" />
+<title>Study Clock</title>
+</head>
+<body data-s="idle">
+<style>
+/* ═══════════ faces ═══════════
+   The same two variable faces as the run app, served from this origin and
+   precached by the service worker — no external request. */
+@font-face{
+  font-family:"Archivo VF";
+  src:url("./fonts/archivo-var.woff2") format("woff2");
+  font-weight:100 900; font-stretch:62% 125%; font-style:normal; font-display:swap;
+}
+@font-face{
+  font-family:"Martian VF";
+  src:url("./fonts/martian-var.woff2") format("woff2");
+  font-weight:100 800; font-stretch:75% 112.5%; font-style:normal; font-display:swap;
+}
+
+/* ═══════════ tokens ═══════════
+   Green is studying, amber is a break. The big button always wears the colour
+   of the state it will put you in. */
+:root{
+  --sans:"Archivo VF",-apple-system,BlinkMacSystemFont,"Segoe UI",Helvetica,Arial,sans-serif;
+  --mono:"Martian VF",ui-monospace,"SF Mono",SFMono-Regular,Menlo,Consolas,monospace;
+
+  --void:#08090A; --steel:#111615; --steel2:#171D1C; --sink:#0C100F;
+  --line:#1F2826; --line2:#2D3936;
+  --ink:#ECEFEE; --ink2:#A7B2AF; --mut:#6A7774;
+  --study:#5ED39A; --study-ink:#04140B; --study-glow:rgba(94,211,154,.24); --study-halo:rgba(94,211,154,.12);
+  --brk:#E9A93F; --brk-ink:#160E02; --brk-glow:rgba(233,169,63,.24); --brk-halo:rgba(233,169,63,.10);
+  --warn:#E0A13C; --stop:#E2565C;
+  --rule:1px solid var(--line);
+  --pop:0 1px 0 rgba(255,255,255,.045) inset, 0 24px 48px -30px #000;
+  --grain:.055;
+}
+@media (prefers-color-scheme: light){
+  :root:not([data-theme="dark"]){
+    --void:#E8EBEA; --steel:#FFFFFF; --steel2:#F1F4F3; --sink:#DEE3E1;
+    --line:#DADFDD; --line2:#C2CAC7;
+    --ink:#0E1311; --ink2:#3A4440; --mut:#6C7773;
+    --study:#17804E; --study-ink:#FFFFFF; --study-glow:rgba(23,128,78,.16); --study-halo:rgba(23,128,78,.06);
+    --brk:#9A620B; --brk-ink:#FFFFFF; --brk-glow:rgba(154,98,11,.16); --brk-halo:rgba(154,98,11,.06);
+    --warn:#8A5D0E; --stop:#B3282E;
+    --pop:0 1px 2px rgba(14,19,17,.06), 0 22px 44px -32px rgba(14,19,17,.55);
+    --grain:.03;
+  }
+}
+:root[data-theme="dark"]{
+  --void:#08090A; --steel:#111615; --steel2:#171D1C; --sink:#0C100F;
+  --line:#1F2826; --line2:#2D3936;
+  --ink:#ECEFEE; --ink2:#A7B2AF; --mut:#6A7774;
+  --study:#5ED39A; --study-ink:#04140B; --study-glow:rgba(94,211,154,.24); --study-halo:rgba(94,211,154,.12);
+  --brk:#E9A93F; --brk-ink:#160E02; --brk-glow:rgba(233,169,63,.24); --brk-halo:rgba(233,169,63,.10);
+  --warn:#E0A13C; --stop:#E2565C;
+  --pop:0 1px 0 rgba(255,255,255,.045) inset, 0 24px 48px -30px #000;
+  --grain:.055;
+}
+:root[data-theme="light"]{
+  --void:#E8EBEA; --steel:#FFFFFF; --steel2:#F1F4F3; --sink:#DEE3E1;
+  --line:#DADFDD; --line2:#C2CAC7;
+  --ink:#0E1311; --ink2:#3A4440; --mut:#6C7773;
+  --study:#17804E; --study-ink:#FFFFFF; --study-glow:rgba(23,128,78,.16); --study-halo:rgba(23,128,78,.06);
+  --brk:#9A620B; --brk-ink:#FFFFFF; --brk-glow:rgba(154,98,11,.16); --brk-halo:rgba(154,98,11,.06);
+  --warn:#8A5D0E; --stop:#B3282E;
+  --pop:0 1px 2px rgba(14,19,17,.06), 0 22px 44px -32px rgba(14,19,17,.55);
+  --grain:.03;
+}
+/* the state colour: what the dial is doing right now */
+body{--acc:var(--study);--acc-halo:var(--study-halo)}
+body[data-s="break"]{--acc:var(--brk);--acc-halo:var(--brk-halo)}
+
+*{box-sizing:border-box}
+[hidden]{display:none!important}
+html{-webkit-text-size-adjust:100%}
+body{margin:0;background:var(--void);color:var(--ink);font-family:var(--sans);
+  font-size:16px;line-height:1.5;-webkit-font-smoothing:antialiased;
+  -webkit-tap-highlight-color:transparent;overflow-x:hidden}
+button{font-family:inherit;cursor:pointer;touch-action:manipulation;
+  -webkit-user-select:none;user-select:none;color:inherit}
+:focus-visible{outline:2px solid var(--acc);outline-offset:3px;border-radius:6px}
+
+/* film grain — keeps the ground from reading as flat digital black */
+#grain{position:fixed;inset:0;z-index:1;pointer-events:none;opacity:var(--grain);
+  background-repeat:repeat;background-size:128px 128px;mix-blend-mode:overlay}
+
+.shell{position:relative;z-index:2;max-width:520px;margin:0 auto;
+  padding:0 16px calc(56px + env(safe-area-inset-bottom))}
+
+/* ═══════════ top bar ═══════════ */
+.bar{position:sticky;top:0;z-index:30;
+  background:color-mix(in srgb, var(--void) 88%, transparent);
+  backdrop-filter:blur(14px) saturate(1.3);-webkit-backdrop-filter:blur(14px) saturate(1.3);
+  border-bottom:var(--rule);display:flex;align-items:center;justify-content:space-between;
+  gap:12px;padding:calc(13px + env(safe-area-inset-top)) 0 12px}
+.brand{display:flex;align-items:center;gap:8px;min-width:0}
+.brand i{width:11px;height:11px;flex:0 0 11px;border-radius:50%;background:var(--acc);
+  box-shadow:0 0 14px var(--acc);transition:background .4s,box-shadow .4s}
+.brand b{font-weight:800;font-size:.72rem;letter-spacing:.02em;text-transform:uppercase;
+  font-variation-settings:"wdth" 100;white-space:nowrap}
+.save{display:inline-flex;align-items:center;gap:8px;color:var(--mut);font-family:var(--mono);
+  font-size:.56rem;letter-spacing:.11em;text-transform:uppercase;font-variation-settings:"wdth" 82;
+  white-space:nowrap}
+.save b{width:5px;height:5px;border-radius:50%;background:var(--study);flex:0 0 5px;
+  box-shadow:0 0 8px currentColor}
+.save[data-s="local"]{color:var(--warn)} .save[data-s="local"] b{background:var(--warn)}
+
+/* ═══════════ the dial ═══════════
+   60 ticks: one per minute of the hour you are in, lit as you study.
+   The inner ring sweeps once a minute while the clock is running. */
+.clock{text-align:center}
+.dial-wrap{--d:min(310px,80vw);position:relative;width:var(--d);height:var(--d);margin:22px auto 0}
+.dial-wrap::before{content:"";position:absolute;inset:-6%;border-radius:50%;pointer-events:none;
+  background:radial-gradient(circle,var(--acc-halo) 0%,transparent 68%);transition:background .5s}
+body[data-s="idle"] .dial-wrap::before{opacity:.45}
+.dial{position:absolute;inset:0;width:100%;height:100%;overflow:visible}
+.dial .tick{stroke:var(--line2);stroke-width:2;stroke-linecap:round;transition:stroke .4s}
+.dial .tick.maj{stroke-width:2.6}
+.dial .tick.on{stroke:var(--acc)}
+.dial .track{fill:none;stroke:var(--line);stroke-width:1.5}
+.dial .sweep{fill:none;stroke:var(--acc);stroke-width:2.6;stroke-linecap:round;
+  transition:stroke .4s,opacity .4s}
+body[data-s="idle"] .dial .sweep{opacity:0}
+body[data-s="break"] .dial .sweep{opacity:.45}
+
+.face{position:absolute;inset:0;display:flex;flex-direction:column;align-items:center;
+  justify-content:center;gap:2px;pointer-events:none}
+.d-state{font-family:var(--mono);font-weight:600;font-size:.6rem;letter-spacing:.24em;
+  text-transform:uppercase;color:var(--acc);font-variation-settings:"wdth" 88;
+  transition:color .4s;margin-bottom:6px}
+body[data-s="idle"] .d-state{color:var(--mut)}
+.d-time{font-family:var(--sans);font-variation-settings:"wdth" 125,"wght" 800;
+  font-variant-numeric:tabular-nums;letter-spacing:-.045em;line-height:1;
+  font-size:calc(var(--d) * .2);color:var(--ink);transition:color .4s,opacity .4s;
+  display:flex;align-items:baseline;white-space:nowrap}
+.d-time.long{font-size:calc(var(--d) * .165)}
+.d-time small{font-size:.34em;letter-spacing:-.02em;color:var(--acc);margin-left:.14em;
+  font-variation-settings:"wdth" 118,"wght" 700;transition:color .4s}
+body[data-s="idle"] .d-time{color:var(--ink2)}
+body[data-s="idle"] .d-time small{color:var(--mut)}
+body[data-s="break"] .d-time{opacity:.55}
+.d-sub{font-family:var(--mono);font-size:.6rem;letter-spacing:.12em;text-transform:uppercase;
+  color:var(--mut);font-variation-settings:"wdth" 88;font-variant-numeric:tabular-nums;
+  margin-top:12px;min-height:1.5em}
+body[data-s="break"] .d-sub{color:var(--brk)}
+
+/* ═══════════ controls ═══════════ */
+/* the one button that must never be clever */
+.go{position:relative;margin-top:24px;width:100%;min-height:70px;border:none;border-radius:16px;
+  background:var(--study);color:var(--study-ink);font-weight:800;font-size:1.02rem;
+  letter-spacing:.1em;text-transform:uppercase;font-variation-settings:"wdth" 112,"wght" 800;
+  display:flex;align-items:center;justify-content:center;gap:12px;
+  box-shadow:0 14px 34px -16px var(--study-glow), var(--pop);
+  transition:transform .12s cubic-bezier(.2,.9,.3,1.2),filter .16s,background .3s,color .3s,box-shadow .3s}
+.go[data-next="break"]{background:var(--brk);color:var(--brk-ink);
+  box-shadow:0 14px 34px -16px var(--brk-glow), var(--pop)}
+.go:hover{filter:brightness(1.07)}
+.go:active{transform:scale(.982)}
+.go svg{flex:0 0 auto}
+.fin{margin-top:10px;width:100%;min-height:52px;border:1px solid var(--line2);border-radius:14px;
+  background:var(--steel);color:var(--ink2);font-weight:700;font-size:.74rem;letter-spacing:.12em;
+  text-transform:uppercase;font-variation-settings:"wdth" 108,"wght" 700;
+  transition:border-color .16s,color .16s,transform .12s}
+.fin:hover{border-color:var(--ink2);color:var(--ink)}
+.fin:active{transform:scale(.985)}
+.hint{font-family:var(--mono);font-size:.56rem;letter-spacing:.13em;text-transform:uppercase;
+  color:var(--mut);line-height:1.8;margin:14px 0 0;font-variation-settings:"wdth" 88}
+
+/* ═══════════ totals ═══════════ */
+.mini{display:grid;grid-template-columns:repeat(3,1fr);margin-top:24px;
+  background:var(--steel);border:var(--rule);border-radius:13px;overflow:hidden}
+.mini div{padding:14px 10px;border-left:var(--rule);min-width:0}
+.mini div:first-child{border-left:none}
+.mini b{display:block;font-family:var(--sans);font-variation-settings:"wdth" 125,"wght" 800;
+  font-size:clamp(1.05rem,5.4vw,1.4rem);line-height:1;letter-spacing:-.035em;
+  font-variant-numeric:tabular-nums;margin-bottom:7px;white-space:nowrap}
+.mini span{font-family:var(--mono);font-size:.55rem;letter-spacing:.15em;text-transform:uppercase;
+  color:var(--mut);font-variation-settings:"wdth" 82}
+
+/* ═══════════ history ═══════════ */
+.band{display:flex;align-items:center;gap:12px;padding:30px 2px 4px}
+.band-t{font-weight:700;font-size:.72rem;letter-spacing:.13em;text-transform:uppercase;
+  color:var(--mut);font-variation-settings:"wdth" 96;white-space:nowrap}
+.band s{flex:1;height:1px;background:var(--line);display:block}
+.day{display:flex;justify-content:space-between;align-items:baseline;gap:12px;
+  padding:18px 2px 8px}
+.day-n{font-weight:700;font-size:.8rem;letter-spacing:.02em;font-variation-settings:"wdth" 104}
+.day-t{font-family:var(--mono);font-size:.62rem;letter-spacing:.08em;color:var(--study);
+  font-variant-numeric:tabular-nums;font-weight:600}
+.ses{display:grid;grid-template-columns:1fr auto 44px;align-items:center;gap:10px;
+  background:var(--steel);border:var(--rule);border-radius:13px;padding:6px 6px 6px 15px;
+  margin-bottom:6px}
+.ses-w{font-family:var(--mono);font-size:.62rem;letter-spacing:.05em;color:var(--ink2);
+  font-variant-numeric:tabular-nums;font-variation-settings:"wdth" 88;min-width:0}
+.ses-b{display:block;color:var(--mut);font-size:.56rem;letter-spacing:.1em;text-transform:uppercase;
+  margin-top:2px}
+.ses-d{font-family:var(--sans);font-variation-settings:"wdth" 118,"wght" 700;font-size:1.06rem;
+  letter-spacing:-.02em;font-variant-numeric:tabular-nums;white-space:nowrap}
+.ses-x{width:44px;height:44px;border:none;background:none;border-radius:10px;color:var(--mut);
+  display:grid;place-items:center;padding:0;transition:color .16s,background .16s}
+.ses-x:hover{color:var(--stop);background:var(--steel2)}
+.empty{font-size:.85rem;color:var(--mut);line-height:1.6;margin:12px 2px 0}
+
+/* ═══════════ backup ═══════════ */
+.data{margin-top:30px;background:var(--steel);border:var(--rule);border-radius:13px;padding:16px}
+.data-t{font-weight:700;font-size:.68rem;letter-spacing:.16em;text-transform:uppercase;
+  font-family:var(--mono);color:var(--ink2)}
+.data-p{font-size:.79rem;line-height:1.55;color:var(--mut);margin:10px 0 14px}
+.data-btns{display:flex;gap:8px}
+.data-btns button{flex:1;border:1px solid var(--line2);background:var(--steel2);color:var(--ink);
+  border-radius:11px;font-weight:700;font-size:.7rem;letter-spacing:.1em;text-transform:uppercase;
+  padding:14px 8px;min-height:48px;transition:border-color .16s,color .16s}
+.data-btns button:hover{border-color:var(--study);color:var(--study)}
+.tip{font-family:var(--mono);font-size:.58rem;line-height:1.8;color:var(--mut);
+  letter-spacing:.09em;text-transform:uppercase;border-top:var(--rule);padding-top:16px;
+  margin-top:22px;display:flex;justify-content:space-between;gap:12px;flex-wrap:wrap}
+
+/* ═══════════ toast ═══════════ */
+.toast{position:fixed;left:50%;transform:translateX(-50%) translateY(16px);
+  bottom:calc(20px + env(safe-area-inset-bottom));z-index:120;
+  display:flex;align-items:center;gap:14px;max-width:min(440px,calc(100vw - 28px));
+  background:var(--steel);border:1px solid var(--line2);border-radius:13px;
+  padding:12px 13px 12px 17px;box-shadow:var(--pop);
+  font-size:.82rem;font-weight:700;letter-spacing:.02em;
+  opacity:0;pointer-events:none;transition:opacity .2s,transform .2s cubic-bezier(.2,.9,.3,1.1)}
+.toast.on{opacity:1;transform:translateX(-50%) translateY(0);pointer-events:auto}
+.toast button{border:1px solid var(--line2);background:none;border-radius:9px;
+  font-weight:800;font-size:.65rem;letter-spacing:.12em;text-transform:uppercase;
+  padding:10px 13px;min-height:38px;white-space:nowrap}
+.toast button:hover{border-color:var(--study);color:var(--study)}
+
+/* ═══════════ motion ═══════════ */
+@keyframes rise{from{opacity:0;transform:translateY(14px)}to{opacity:1;transform:none}}
+@keyframes dialin{from{opacity:0;transform:scale(.94)}to{opacity:1;transform:none}}
+.reveal{opacity:0}
+.shown .reveal{opacity:1}
+.revealing .reveal{animation:rise .62s cubic-bezier(.16,.84,.3,1) both}
+.revealing .dial-wrap.reveal{animation-name:dialin}
+@media (prefers-reduced-motion:reduce){
+  *{transition:none!important;animation:none!important}
+  .reveal{opacity:1}
+}
+</style>
+
+<div id="grain" aria-hidden="true"></div>
+
+<div class="shell">
+  <div class="bar">
+    <span class="brand"><i></i><b>Study Clock</b></span>
+    <span class="save" id="save" data-s="ready"><b></b><span id="saveT">Saved on this phone</span></span>
+  </div>
+
+  <section class="clock" aria-label="Stopwatch">
+    <div class="dial-wrap reveal">
+      <svg class="dial" viewBox="0 0 240 240" aria-hidden="true">
+        <g id="ticks"></g>
+        <circle class="track" cx="120" cy="120" r="98"/>
+        <circle class="sweep" id="sweep" cx="120" cy="120" r="98" transform="rotate(-90 120 120)"/>
+      </svg>
+      <div class="face">
+        <span class="d-state" id="dState" aria-live="polite">Ready</span>
+        <span class="d-time" id="dTime" role="timer" aria-label="Time studied"><span id="dHM">0:00</span><small id="dSS">00</small></span>
+        <span class="d-sub" id="dSub">Breaks don't count</span>
+      </div>
+    </div>
+
+    <button class="go reveal" id="go" type="button" data-next="study">
+      <svg id="goIcon" viewBox="0 0 24 24" width="18" height="18" aria-hidden="true"><path d="M8 5.5v13l11-6.5z" fill="currentColor"/></svg>
+      <span id="goLabel">Start studying</span>
+    </button>
+    <button class="fin" id="fin" type="button" hidden>Finish &amp; save session</button>
+    <p class="hint reveal" id="hint">Start it, then put your phone face down</p>
+  </section>
+
+  <div class="mini reveal">
+    <div><b id="tToday">0m</b><span>Today</span></div>
+    <div><b id="tWeek">0m</b><span>This week</span></div>
+    <div><b id="tAll">0m</b><span>All time</span></div>
+  </div>
+
+  <section class="reveal" aria-labelledby="histT">
+    <div class="band"><span class="band-t" id="histT">Sessions</span><s></s></div>
+    <div id="hist"></div>
+    <p class="empty" id="empty">Finished sessions land here, grouped by day — study time only, breaks left out.</p>
+  </section>
+
+  <div class="data reveal">
+    <span class="data-t">Your data</span>
+    <p class="data-p" id="persistNote">There is no account and no server — your sessions live on this phone. iOS can clear web-app storage when space runs short, so export a backup now and then and keep it in Files.</p>
+    <div class="data-btns">
+      <button type="button" id="exportBtn">Export backup</button>
+      <button type="button" id="restoreBtn">Restore</button>
+    </div>
+    <input type="file" id="fileInput" accept="application/json,.json" hidden>
+  </div>
+
+  <p class="tip reveal"><span>Works with no signal</span><span>Nothing leaves this phone</span></p>
+</div>
+
+<div class="toast" id="toast" role="status" aria-live="polite"><span id="toastT"></span><button type="button" id="toastU" hidden>Undo</button></div>
+
+<script>
+(function(){
+"use strict";
+
+var KEY="study-v1";
+var state={v:1,updated:0,sessions:[],cur:null};
+var $=function(id){ return document.getElementById(id); };
+
+/* ================= the clock =================
+   Nothing here counts ticks. A session is a handful of timestamps, and every
+   number on screen is worked out from Date.now() when it is drawn. So locking
+   the phone, switching apps, iOS freezing the page or killing it outright
+   changes nothing: open it again and the time is right to the second.
+
+   cur = { start, acc, runAt, brkAcc, pauseAt, breaks }
+     acc     study time banked before the current stretch
+     runAt   when the current study stretch began (null on a break)
+     brkAcc  break time banked before the current break
+     pauseAt when the current break began (null while studying) */
+
+function studied(c,t){ return c.acc + (c.runAt!=null ? Math.max(0,t-c.runAt) : 0); }
+function breakNow(c,t){ return c.pauseAt!=null ? Math.max(0,t-c.pauseAt) : 0; }
+function mode(){ return !state.cur ? "idle" : (state.cur.runAt!=null ? "study" : "break"); }
+
+function start(){
+  var t=Date.now();
+  state.cur={start:t,acc:0,runAt:t,brkAcc:0,pauseAt:null,breaks:0};
+  commit(); buzz(14);
+}
+function pause(){
+  var c=state.cur, t=Date.now();
+  c.acc=studied(c,t); c.runAt=null; c.pauseAt=t; c.breaks++;
+  commit(); buzz([10,60,10]);
+}
+function resume(){
+  var c=state.cur, t=Date.now();
+  c.brkAcc+=breakNow(c,t); c.pauseAt=null; c.runAt=t;
+  commit(); buzz(14);
+}
+function finish(){
+  var c=state.cur, t=Date.now(), before=JSON.parse(JSON.stringify(c));
+  var paused=c.pauseAt!=null;
+  /* A break you never came back from isn't a break: the session ended when you paused. */
+  var rec={start:c.start, end:paused?c.pauseAt:t, study:studied(c,t), brk:c.brkAcc,
+           breaks:paused?c.breaks-1:c.breaks};
+  state.cur=null;
+  var kept=rec.study>=1000;
+  if(kept) state.sessions.push(rec);
+  commit(); buzz(20);
+  toast(kept?"Saved "+dur(rec.study)+" of study":"Nothing to save", function(){
+    if(state.cur){ toast("A new session is already running"); return; }
+    var i=state.sessions.indexOf(rec); if(i>=0) state.sessions.splice(i,1);
+    state.cur=before; commit();
+  });
+}
+/* One tap, one change: a fumbled double-tap shouldn't start a break you didn't mean. */
+var lastTap=0;
+function toggle(){
+  var t=Date.now(); if(t-lastTap<400) return; lastTap=t;
+  var m=mode();
+  if(m==="idle") start(); else if(m==="study") pause(); else resume();
+}
+
+/* ================= persistence =================
+   No account and no server: sessions live in this phone's storage.
+   localStorage is the record; sessionStorage is a backstop for the private-tab
+   case where localStorage throws. navigator.storage.persist() asks iOS not to
+   evict us, and Export/Restore is the way across to a new phone. The clock state
+   is written on every tap, so the running session survives the app being closed. */
+
+var saveEl=$("save"), saveT=$("saveT");
+function num(x){ return typeof x==="number" && isFinite(x); }
+function okSession(s){ return s && num(s.start) && num(s.end) && num(s.study); }
+function okCur(c){
+  return c && num(c.start) && num(c.acc) && num(c.brkAcc)
+    && (c.runAt==null ? num(c.pauseAt) : num(c.runAt) && c.pauseAt==null);
+}
+function adopt(o){
+  return {v:1, updated:o.updated||0,
+    sessions:o.sessions.filter(okSession).map(function(s){
+      return {start:s.start,end:s.end,study:s.study,brk:num(s.brk)?s.brk:0,breaks:num(s.breaks)?s.breaks:0};
+    }),
+    cur:okCur(o.cur)?o.cur:null};
+}
+function parse(t){ try{ var o=JSON.parse(t); return (o&&Array.isArray(o.sessions))?adopt(o):null; }catch(e){ return null; } }
+function fromStore(st){ try{ return st?parse(st.getItem(KEY)):null; }catch(e){ return null; } }
+function readLocal(){ return fromStore(window.localStorage) || fromStore(window.sessionStorage); }
+var storageOk=true;
+function writeLocal(){
+  var j=JSON.stringify(state), ok=false;
+  try{ localStorage.setItem(KEY,j); ok=true; }catch(e){}
+  try{ sessionStorage.setItem(KEY,j); }catch(e){}
+  storageOk=ok;
+}
+function setSave(s){
+  saveEl.setAttribute("data-s",s);
+  saveT.textContent = s==="local" ? "Not saving — check Safari settings" : "Saved on this phone";
+}
+function persist(){
+  state.updated=Date.now();
+  writeLocal();
+  setSave(storageOk?"ready":"local");
+}
+function commit(){ persist(); paintAll(); }
+
+/* ---- backup out to a file, and back in from one ---- */
+function stamp(){
+  var d=new Date();
+  return d.getFullYear()+"-"+pad(d.getMonth()+1)+"-"+pad(d.getDate());
+}
+$("exportBtn").addEventListener("click",function(){
+  var blob=new Blob([JSON.stringify(state,null,2)],{type:"application/json"});
+  var url=URL.createObjectURL(blob), a=document.createElement("a");
+  a.href=url; a.download="study-clock-"+stamp()+".json";
+  document.body.appendChild(a); a.click(); a.remove();
+  setTimeout(function(){ URL.revokeObjectURL(url); },1000);
+  toast("Backup downloaded");
+});
+$("restoreBtn").addEventListener("click",function(){ $("fileInput").click(); });
+$("fileInput").addEventListener("change",function(){
+  var f=$("fileInput").files[0]; $("fileInput").value="";
+  if(!f) return;
+  var reader=new FileReader();
+  reader.onload=function(){
+    var d=parse(reader.result);
+    if(!d){ toast("That file isn't a Study Clock backup"); return; }
+    var n=d.sessions.length;
+    if(!confirm("Restore "+n+" sessions? This replaces the history on this phone. A session running now keeps running.")) return;
+    state.sessions=d.sessions; commit();
+    toast("Restored "+n+" sessions");
+  };
+  reader.onerror=function(){ toast("Couldn't read that file"); };
+  reader.readAsText(f);
+});
+
+/* ================= formatting ================= */
+function pad(n){ return (n<10?"0":"")+n; }
+/* Always rounded down, so the app never claims a minute you didn't study. */
+function dur(ms){
+  var m=Math.floor(ms/60000), h=Math.floor(m/60); m%=60;
+  if(!h) return (ms>0&&ms<60000) ? "<1m" : m+"m";
+  return m ? h+"h "+m+"m" : h+"h";
+}
+function clockText(ms){
+  var s=Math.floor(ms/1000), h=Math.floor(s/3600), m=Math.floor(s/60)%60;
+  return (h? h+":"+pad(m) : m)+":"+pad(s%60);
+}
+function timeOf(t){ return new Date(t).toLocaleTimeString([], {hour:"numeric",minute:"2-digit"}); }
+function dayStart(t){ var d=new Date(t); d.setHours(0,0,0,0); return d.getTime(); }
+function weekStart(t){
+  var d=new Date(dayStart(t));
+  d.setDate(d.getDate()-(d.getDay()+6)%7);   // weeks start on Monday
+  return d.getTime();
+}
+function dayName(t,now){
+  var a=dayStart(t), today=dayStart(now), y=new Date(today); y.setDate(y.getDate()-1);
+  if(a===today) return "Today";
+  if(a===y.getTime()) return "Yesterday";
+  var o={weekday:"short",month:"short",day:"numeric"};
+  if(new Date(t).getFullYear()!==new Date(now).getFullYear()) o.year="numeric";
+  return new Date(t).toLocaleDateString([], o);
+}
+
+/* ================= drawing ================= */
+var R_SWEEP=98, SWEEP_C=2*Math.PI*R_SWEEP;
+function reduced(){ try{ return window.matchMedia("(prefers-reduced-motion: reduce)").matches; }catch(e){ return false; } }
+/* with reduced motion the sweep steps once a second instead of gliding */
+var reducedMotion=reduced();
+var ticks=[], sweep=$("sweep"), dHM=$("dHM"), dSS=$("dSS"), dTime=$("dTime");
+var dState=$("dState"), dSub=$("dSub"), go=$("go"), fin=$("fin"), hint=$("hint");
+var last={hm:"",s:-1,b:-1,min:-1,sub:"",tot:""};
+
+function buildTicks(){
+  var NS="http://www.w3.org/2000/svg", g=$("ticks");
+  for(var i=0;i<60;i++){
+    var a=i/60*2*Math.PI, maj=i%5===0, r0=maj?104:107, r1=115;
+    var l=document.createElementNS(NS,"line");
+    l.setAttribute("x1",(120+Math.sin(a)*r0).toFixed(2));
+    l.setAttribute("y1",(120-Math.cos(a)*r0).toFixed(2));
+    l.setAttribute("x2",(120+Math.sin(a)*r1).toFixed(2));
+    l.setAttribute("y2",(120-Math.cos(a)*r1).toFixed(2));
+    l.setAttribute("class","tick"+(maj?" maj":""));
+    g.appendChild(l); ticks.push(l);
+  }
+  sweep.setAttribute("stroke-dasharray",SWEEP_C.toFixed(2));
+  sweep.setAttribute("stroke-dashoffset",SWEEP_C.toFixed(2));
+}
+
+/* The labels and buttons only change when you tap; this paints them. */
+function paintState(){
+  var m=mode(), c=state.cur;
+  document.body.setAttribute("data-s",m);
+  dState.textContent = m==="study" ? "Studying" : m==="break" ? "On break" : "Ready";
+  go.setAttribute("data-next", m==="study" ? "break" : "study");
+  $("goLabel").textContent = m==="idle" ? "Start studying" : m==="study" ? "Take a break" : "Back to studying";
+  $("goIcon").innerHTML = m==="study"
+    ? '<path d="M7 5h3.5v14H7zM13.5 5H17v14h-3.5z" fill="currentColor"/>'
+    : '<path d="M8 5.5v13l11-6.5z" fill="currentColor"/>';
+  fin.hidden = m==="idle";
+  hint.textContent = m==="study" ? "Lock your phone — the clock keeps counting"
+    : m==="break" ? "Paused — break time isn't counted"
+    : "Start it, then put your phone face down";
+  if(m==="idle") dSub.textContent="Breaks don't count";
+  last.sub=""; last.min=-1; last.s=-1; last.tot="";
+}
+
+/* Everything that moves with time: drawn every frame while the page is on screen. */
+function paintClock(){
+  var t=Date.now(), c=state.cur, m=mode();
+  var ms=c?studied(c,t):0, s=Math.floor(ms/1000);
+  var h=Math.floor(s/3600), hm=h+":"+pad(Math.floor(s/60)%60), ss=pad(s%60);
+  if(hm!==last.hm){
+    dHM.textContent=hm; dTime.classList.toggle("long",h>=10); last.hm=hm;
+    dTime.setAttribute("aria-label",(c?dur(ms):"0m")+" studied");
+  }
+  /* the ring empties at each hour; the numerals carry the hours */
+  var min=c?Math.floor(s/60)%60:0;
+  if(min!==last.min){
+    for(var i=0;i<60;i++) ticks[i].classList.toggle("on", i<min);
+    last.min=min;
+  }
+  var swept = reducedMotion ? s*1000 : ms;
+  sweep.setAttribute("stroke-dashoffset",(SWEEP_C*(1-(swept%60000)/60000)).toFixed(2));
+
+  /* the rest only changes once a second */
+  var b=c&&m==="break" ? Math.floor(breakNow(c,t)/1000) : -1;
+  if(s===last.s && b===last.b) return;
+  dSS.textContent=ss; last.s=s; last.b=b;
+  if(c){
+    var sub = m==="break"
+      ? "Break "+clockText(b*1000)
+      : "Since "+timeOf(c.start)+(c.breaks? " · "+c.breaks+(c.breaks===1?" break":" breaks") : "");
+    if(sub!==last.sub){ dSub.textContent=sub; last.sub=sub; }
+  }
+  paintTotals(t);
+}
+
+/* Today, this week and all time — the running session counts, from the day it began. */
+function paintTotals(t){
+  var d0=dayStart(t), w0=weekStart(t), td=0, wk=0, all=0;
+  var list=state.sessions.slice();
+  if(state.cur) list.push({start:state.cur.start, study:studied(state.cur,t)});
+  for(var i=0;i<list.length;i++){
+    var x=list[i];
+    all+=x.study;
+    if(x.start>=w0) wk+=x.study;
+    if(x.start>=d0) td+=x.study;
+  }
+  var key=dur(td)+"|"+dur(wk)+"|"+dur(all);
+  if(key===last.tot) return;
+  last.tot=key;
+  $("tToday").textContent=dur(td); $("tWeek").textContent=dur(wk); $("tAll").textContent=dur(all);
+}
+
+function esc(s){ return String(s).replace(/[&<>"]/g,function(ch){ return {"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[ch]; }); }
+var X_ICON='<svg viewBox="0 0 24 24" width="15" height="15" aria-hidden="true"><path d="M6 6l12 12M18 6L6 18" stroke="currentColor" stroke-width="2" stroke-linecap="round" fill="none"/></svg>';
+
+function paintHistory(){
+  var now=Date.now(), list=state.sessions.slice().sort(function(a,b){ return b.start-a.start; });
+  var html="", i=0;
+  while(i<list.length){
+    var d=dayStart(list[i].start), rows="", tot=0;
+    for(; i<list.length && dayStart(list[i].start)===d; i++){
+      var s=list[i]; tot+=s.study;
+      var b=s.breaks ? s.breaks+(s.breaks===1?" break · ":" breaks · ")+dur(s.brk) : "No breaks";
+      rows+='<div class="ses"><span class="ses-w">'+esc(timeOf(s.start)+" – "+timeOf(s.end))
+        +'<span class="ses-b">'+esc(b)+'</span></span>'
+        +'<span class="ses-d">'+dur(s.study)+'</span>'
+        +'<button type="button" class="ses-x" data-del="'+s.start+'" aria-label="Delete the '
+        +esc(timeOf(s.start))+' session">'+X_ICON+'</button></div>';
+    }
+    html+='<div class="day"><span class="day-n">'+esc(dayName(d,now))+'</span><span class="day-t">'
+      +dur(tot)+'</span></div>'+rows;
+  }
+  $("hist").innerHTML=html;
+  $("empty").hidden=list.length>0;
+}
+
+function paintAll(){ paintState(); paintHistory(); paintClock(); kick(); }
+
+/* Frames only while something is running and the page is visible — a locked
+   phone costs nothing, and the next frame after unlocking is already correct. */
+var raf=0;
+function loop(){
+  raf=0; paintClock();
+  if(state.cur && document.visibilityState==="visible") raf=requestAnimationFrame(loop);
+}
+function kick(){ if(!raf && state.cur) raf=requestAnimationFrame(loop); }
+
+/* ================= toast ================= */
+var toastTimer=0, undoFn=null;
+function toast(msg,undo){
+  $("toastT").textContent=msg; undoFn=undo||null;
+  $("toastU").hidden=!undo;
+  $("toast").classList.add("on");
+  clearTimeout(toastTimer);
+  toastTimer=setTimeout(function(){ $("toast").classList.remove("on"); undoFn=null; }, undo?6000:2600);
+}
+$("toastU").addEventListener("click",function(){
+  var f=undoFn; undoFn=null; $("toast").classList.remove("on");
+  if(f) f();
+});
+
+function buzz(p){ try{ if(navigator.vibrate) navigator.vibrate(p); }catch(e){} }
+
+/* ================= wiring ================= */
+go.addEventListener("click",toggle);
+fin.addEventListener("click",function(){ if(state.cur) finish(); });
+$("hist").addEventListener("click",function(e){
+  var b=e.target.closest ? e.target.closest("[data-del]") : null;
+  if(!b) return;
+  var at=Number(b.getAttribute("data-del")), i=-1;
+  for(var k=0;k<state.sessions.length;k++){ if(state.sessions[k].start===at){ i=k; break; } }
+  if(i<0) return;
+  var gone=state.sessions.splice(i,1)[0];
+  commit();
+  toast("Deleted "+dur(gone.study)+" session", function(){ state.sessions.push(gone); commit(); });
+});
+document.addEventListener("keydown",function(e){
+  if(e.target&&(e.target.tagName==="BUTTON"||e.target.tagName==="INPUT")) return;
+  if(e.key===" "||e.key==="Spacebar"){ e.preventDefault(); toggle(); }
+});
+document.addEventListener("visibilitychange",function(){
+  if(document.visibilityState==="visible"){ last.s=-1; last.tot=""; paintHistory(); paintClock(); kick(); }
+});
+window.addEventListener("pageshow",function(){ last.s=-1; last.tot=""; paintClock(); kick(); });
+/* Open in two places (Safari and the home-screen app share storage on some phones)? Follow the other one. */
+window.addEventListener("storage",function(e){
+  if(e.key!==KEY) return;
+  var o=readLocal(); if(!o) return;
+  state=o; paintAll();
+});
+
+/* ================= boot ================= */
+/* A little generated grain keeps the ground from reading as flat digital black. */
+function grain(){
+  try{
+    var n=128, c=document.createElement("canvas"); c.width=c.height=n;
+    var x=c.getContext("2d"), img=x.createImageData(n,n), d=img.data;
+    for(var i=0;i<d.length;i+=4){
+      var v=Math.random()*255;
+      d[i]=d[i+1]=d[i+2]=v; d[i+3]=26;
+    }
+    x.putImageData(img,0,0);
+    $("grain").style.backgroundImage="url("+c.toDataURL("image/png")+")";
+  }catch(e){}
+}
+function showAll(){ document.body.classList.add("shown"); }
+function reveal(){
+  if(reduced()){ showAll(); return; }
+  var els=document.querySelectorAll(".reveal");
+  for(var i=0;i<els.length;i++) els[i].style.animationDelay=(80+i*55)+"ms";
+  document.body.classList.add("revealing");
+}
+/* If anything above throws, the page must not stay invisible. */
+setTimeout(function(){
+  if(!document.body.classList.contains("revealing")) showAll();
+},1500);
+
+function boot(){
+  grain();
+  buildTicks();
+  state=readLocal()||state;
+  setSave("ready");
+  paintAll();
+  reveal();
+
+  /* Ask iOS to keep this data through storage pressure, and say plainly if it says no. */
+  if(navigator.storage&&navigator.storage.persist){
+    navigator.storage.persisted().then(function(p){
+      return p?true:navigator.storage.persist();
+    }).then(function(granted){
+      if(!granted){
+        $("persistNote").textContent="iOS hasn't granted this app persistent storage, so it can "
+          +"clear your sessions if the phone runs low on space. Export a backup and keep it in Files.";
+      }
+    }).catch(function(){});
+  }
+
+  if("serviceWorker" in navigator){
+    window.addEventListener("load",function(){ navigator.serviceWorker.register("./sw.js").catch(function(){}); });
+  }
+}
+try{ boot(); }catch(err){ showAll(); throw err; }
+})();
+</script>
+</body>
+</html>

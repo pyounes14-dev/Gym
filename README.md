@@ -15,6 +15,10 @@ The same site also ships **Slow Is the Point** (`run.html`) — a 16-week run/wa
 first 5K with a session timer. It installs as its own home-screen app, side by side with
 Gym Log. Same rules: offline, no account, data on the device.
 
+And it ships **Study Clock** (`study.html`) — a study stopwatch you start when you sit
+down and pause for breaks, so the time it logs is time you actually studied. See
+[Study Clock](#study-clock-studyhtml).
+
 <p align="center">
   <img src="docs/screenshot-picker.png" width="30%" alt="Exercise picker" />
   <img src="docs/screenshot-log.png" width="30%" alt="Logging screen" />
@@ -149,6 +153,43 @@ A hosted-on-claude.ai copy also exists as an artifact. It syncs to a Claude acco
 needs a connection to open, so `run.html` is the one to use for actual runs. If you edit
 one, port the change to the other — they are parallel copies, not a shared source.
 
+## Study Clock (`study.html`)
+
+A stopwatch for studying that's meant to get you **off** your phone: start it, lock the
+phone, put it face down. Pause it when you take a break, so breaks never count.
+
+<p align="center">
+  <img src="docs/screenshot-study-running.png" width="30%" alt="Studying" />
+  <img src="docs/screenshot-study-break.png" width="30%" alt="On a break" />
+  <img src="docs/screenshot-study-history.png" width="30%" alt="Totals and sessions" />
+</p>
+
+- **One button** that toggles: *Start studying* → *Take a break* → *Back to studying*.
+  It always wears the colour of the state it will put you in: green is studying, amber
+  is a break. A fumbled double-tap counts as one tap.
+- **The dial** lights one tick per minute of the hour you're in; the numerals carry
+  the hours. On a break the study time freezes and a separate break counter runs
+  underneath it.
+- **Finish & save** files the session (with Undo). If you pause and then finish, that
+  last pause isn't counted as a break: the session ended when you stopped studying.
+- **Today / This week / All time** totals, live, including the session that's running.
+  A session counts toward the day it started; weeks start on Monday.
+- **Sessions** history grouped by day, with each session's start–end, study time and
+  breaks. Delete one with the ×, and Undo if you didn't mean it.
+
+**Why it stays accurate with the phone locked.** It never counts ticks. A session is a
+few timestamps (when it started, when the current stretch began, how much study and
+break time is already banked) written to storage on every tap, and every number on
+screen is worked out from the clock when it's drawn. So locking the phone, switching
+apps, iOS freezing the page or killing it outright changes nothing: open it again and
+the time is right to the second. It draws frames only while the page is on screen, and
+it never holds a screen wake lock, so a running session costs no battery while the phone
+is locked.
+
+Same data-safety model as the others: storage key `study-v1`, `navigator.storage.persist()`,
+and Export/Restore JSON at the bottom of the page. Same fonts as the run app, precached,
+so it renders identically with no signal.
+
 ## Data safety (important)
 
 There's no server, so everything lives in your browser's local storage. iOS can clear
@@ -172,16 +213,20 @@ Files that must ship together:
 index.html                          Gym Log
 her.html                            Gym Log, second copy (own data + icon)
 run.html                            Slow Is the Point (running)
-sw.js                               caches all three apps for offline
-manifest.webmanifest  her.webmanifest  run.webmanifest
+study.html                          Study Clock (study stopwatch)
+sw.js                               caches all four apps for offline
+manifest.webmanifest  her.webmanifest  run.webmanifest  study.webmanifest
 icon-180.png  icon-192.png  icon-512.png
 her-icon-180.png  her-icon-192.png  her-icon-512.png
 run-icon-180.png  run-icon-192.png  run-icon-512.png
-splash/  her-splash/  run-splash/   (iOS launch-screen images)
+study-icon-180.png  study-icon-192.png  study-icon-512.png
+splash/  her-splash/  run-splash/  study-splash/   (iOS launch-screen images)
+fonts/                              (used by run.html and study.html)
 ```
 
 (`docs/` and `tools/` are not needed at runtime. Regenerate icons + splash with
-`node tools/generate-icons.js` and `node tools/generate-run-icons.js`.)
+`node tools/generate-icons.js`, `node tools/generate-run-icons.js` and
+`node tools/generate-study-icons.js`.)
 
 ### Netlify Drop (easiest)
 1. Go to <https://app.netlify.com/drop>.
@@ -195,7 +240,7 @@ splash/  her-splash/  run-splash/   (iOS launch-screen images)
 Do this once per app — they install separately and get their own icons.
 
 1. Open the HTTPS URL in **Safari** (`/index.html` for Gym Log, `/her.html` for the
-   second copy, `/run.html` for the running plan).
+   second copy, `/run.html` for the running plan, `/study.html` for the study clock).
 2. **Share → Add to Home Screen**.
 3. Launch it once while online so the service worker caches everything — after that it
    **runs fully offline** at the gym or on the road.
@@ -223,6 +268,7 @@ python3 -m http.server 8000
 node tools/generate-icons.js       # Gym Log: dumbbell mark, violet
 node tools/generate-her-icons.js   # Second copy: same mark, accent from tools/her-theme.js
 node tools/generate-run-icons.js   # Slow Is the Point: interval mark, orange
+node tools/generate-study-icons.js # Study Clock: part-lit stopwatch, green
 ```
 
 ### Run the end-to-end tests (Playwright)
@@ -230,8 +276,17 @@ node tools/generate-run-icons.js   # Slow Is the Point: interval mark, orange
 node tools/test-app.mjs              # the acceptance test, against index.html
 APP=her.html node tools/test-app.mjs # the same test, against the second copy
 node tools/test-copies.mjs           # the two copies stay separate on one origin
+node tools/test-study.mjs            # the study clock, on a fake clock
+node tools/shots-study.mjs           # regenerates docs/screenshot-study-*.png
 ```
 Drives a real browser through the acceptance test: pick a previously-trained exercise,
 see last time within one tap, log today's sets with zero typing, beat-last-time feedback,
 rest timer, progress (heaviest/volume) chart, custom exercises, unit toggle, and backup
 export.
+
+`test-study.mjs` freezes the browser's clock and moves it by hand, so "study 25
+minutes" takes a millisecond and every total is checked to the second: breaks left out,
+the clock still right after the app is closed for 20 minutes, a trailing pause not
+counted, finish and delete with undo, and the day rolling over. It also checks that
+every file `sw.js` precaches exists — one missing file fails the worker's install for
+all four apps.

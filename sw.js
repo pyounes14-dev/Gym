@@ -1,6 +1,6 @@
 // Service worker for true offline use on iOS home screen.
 // Cache-first for the app shell so it loads with no network at the gym.
-const CACHE = 'gymlog-v7';
+const CACHE = 'gymlog-v8';
 const ASSETS = [
   './',
   './index.html',
@@ -53,6 +53,22 @@ const ASSETS = [
   './her-splash/splash-828x1792.png',
   './her-splash/splash-1242x2208.png',
   './her-splash/splash-750x1334.png',
+  './study.html',
+  './study.webmanifest',
+  './study-icon-180.png',
+  './study-icon-192.png',
+  './study-icon-512.png',
+  './study-splash/splash-1320x2868.png',
+  './study-splash/splash-1206x2622.png',
+  './study-splash/splash-1290x2796.png',
+  './study-splash/splash-1179x2556.png',
+  './study-splash/splash-1284x2778.png',
+  './study-splash/splash-1170x2532.png',
+  './study-splash/splash-1125x2436.png',
+  './study-splash/splash-1242x2688.png',
+  './study-splash/splash-828x1792.png',
+  './study-splash/splash-1242x2208.png',
+  './study-splash/splash-750x1334.png',
 ];
 
 self.addEventListener('install', (e) => {
@@ -68,12 +84,13 @@ self.addEventListener('activate', (e) => {
 });
 
 // Offline navigation falls back to the shell of the app that was asked for — the
-// two gym logs and the run plan share this worker, so a blanket index.html
-// fallback would hand one app's shell to another.
+// two gym logs, the run plan and the study clock share this worker, so a blanket
+// index.html fallback would hand one app's shell to another.
 function shellFor(req) {
   const u = req.url;
   if (u.includes('her.html')) return './her.html';
   if (u.includes('run.html')) return './run.html';
+  if (u.includes('study.html')) return './study.html';
   return './index.html';
 }
 
